@@ -6,10 +6,12 @@ import express from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
 import morgan from 'morgan'
+import cookieParser from 'cookie-parser'
 import { rateLimit } from 'express-rate-limit'
 import { corsOptions } from './config/cors.js'
 import { errorHandler } from './middleware/errorHandler.js'
 import healthRouter from './modules/health/health.routes.js'
+import authRouter from './modules/auth/auth.routes.js'
 
 const app = express()
 
@@ -20,7 +22,8 @@ app.use(helmet())
 app.use(cors(corsOptions))
 app.options('*', cors(corsOptions))
 
-// ─── Body parsing ──────────────────────────────────────────────────────────
+// ─── Cookie & Body parsing ─────────────────────────────────────────────────
+app.use(cookieParser())
 app.use(express.json({ limit: '64kb' }))
 app.use(express.urlencoded({ extended: true, limit: '64kb' }))
 
@@ -32,7 +35,7 @@ if (process.env.NODE_ENV !== 'test') {
 // ─── Global rate limiter (free-tier protection) ────────────────────────────
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 min
-  max: 200,
+  max: 300,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many requests, please try again later.' },
@@ -41,6 +44,7 @@ app.use(globalLimiter)
 
 // ─── Routes ────────────────────────────────────────────────────────────────
 app.use('/api/v1/health', healthRouter)
+app.use('/api/v1/auth', authRouter)
 
 // 404 fallback
 app.use((_req, res) => {

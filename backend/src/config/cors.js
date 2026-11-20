@@ -10,7 +10,7 @@ const allowedOrigins = (process.env.FRONTEND_ORIGINS || 'http://localhost:5173')
 
 export const corsOptions = {
   origin: (origin, callback) => {
-    // Allow requests with no origin (e.g., curl, Postman) only in development
+    // Allow requests with no origin (e.g., curl, Postman) only in development/test
     if (!origin && process.env.NODE_ENV !== 'production') {
       return callback(null, true)
     }
@@ -21,5 +21,6 @@ export const corsOptions = {
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Refresh-Token'],
+  exposedHeaders: ['Set-Cookie'],
 }

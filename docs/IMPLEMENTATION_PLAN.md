@@ -8,13 +8,16 @@
 - Documentation
 - Environment variable templates
 
-## Phase 1 – Database & Authentication
-- Neon database connection
-- Prisma migrations
-- User registration & login (bcrypt + JWT)
-- Auth middleware
-- Protected frontend routes
-- `/auth/register`, `/auth/login`, `/auth/me` endpoints
+## Phase 1 – Database & Authentication ✅
+- Neon database connection verified
+- Initial Prisma migration `init_auth` created and applied
+- User & RefreshToken models implemented
+- User registration & login (bcrypt + JWT + refresh token rotation)
+- Auth middleware (`authenticate`, `authorizeOwner`)
+- Protected and guest frontend routes
+- Responsive Login and Register UI with form validation
+- Axios interceptor with concurrent refresh queueing
+- 18 backend automated tests & 6 frontend tests passing
 
 ## Phase 2 – Book Library & R2 Upload
 - Cloudflare R2 storage service
