@@ -1,50 +1,106 @@
-# Cloudflare R2 Setup Guide
+# Cloudflare R2 Setup Guide for ReadFlow
 
-## 1. Create an R2 Bucket
+## 1. Overview & Free Allowance
 
-1. Log in to the Cloudflare dashboard
-2. Navigate to **R2 Object Storage**
-3. Create a bucket named `readflow-pdfs`
-4. Keep the bucket **private** (no public access)
+Cloudflare R2 is an S3-compatible, zero-egress object storage service. ReadFlow uses a **private** R2 bucket to store user PDF files safely and cost-effectively.
 
-## 2. Create API Tokens
+### Free-Tier Inclusions (Per Month)
+- **10 GB** of standard object storage.
+- **1,000,000** Class A operations (creates, writes, list bucket, upload sessions).
+- **10,000,000** Class B operations (reads, head requests, downloads).
+- **\$0.00 Egress Fees** (unlimited bandwidth to users and backend).
 
-1. Go to **R2 → Manage R2 API Tokens**
-2. Create a token with:
-   - Permissions: **Object Read & Write**
-   - Bucket: `readflow-pdfs` only (not all buckets)
-3. Save the **Access Key ID** and **Secret Access Key**
+---
 
-## 3. Configure CORS on the Bucket
+## 2. Step-by-Step R2 Bucket Provisioning
 
-Add a CORS policy to the bucket to allow direct PUT uploads from the frontend:
+### Step 2.1 Create the Bucket
+1. Log in to your [Cloudflare Dashboard](https://dash.cloudflare.com/).
+2. In the left navigation, select **R2 Object Storage**.
+3. Click **Create bucket**.
+4. Set the bucket name:
+   ```text
+   readflow-pdfs
+   ```
+5. Location: Select **Automatic** (or specify your preferred region).
+6. Click **Create Bucket**.
+7. ⚠️ **Keep Bucket Private**: Do NOT enable Public Access or R2.dev domain. The bucket must remain completely private.
+
+---
+
+### Step 2.2 Generate API Tokens
+The backend requires an S3-compatible API token to generate pre-signed upload/download URLs and run `HeadObject` checks.
+
+1. On the R2 dashboard, click **Manage R2 API Tokens** (in the right sidebar).
+2. Click **Create API token**.
+3. Configure the token:
+   - **Token Name**: `readflow-backend-token`
+   - **Permissions**: **Object Read & Write**
+   - **Specify bucket**: Select **`readflow-pdfs`** (limits access strictly to this bucket).
+   - **TTL**: Leave empty or set to your preferred expiration.
+4. Click **Create API Token**.
+5. Save the generated credentials securely:
+   - **Access Key ID**
+   - **Secret Access Key**
+   - **Endpoint**: `https://<ACCOUNT_ID>.r2.cloudflarestorage.com`
+
+---
+
+## 3. Bucket CORS Policy Configuration
+
+Because frontend web browsers upload PDF files directly to Cloudflare R2 using pre-signed PUT URLs, you must configure CORS on the bucket.
+
+1. Open your bucket (`readflow-pdfs`) in the Cloudflare Dashboard.
+2. Select the **Settings** tab.
+3. Scroll down to **CORS Policy** and click **Add CORS Policy** (or Edit).
+4. Paste the following JSON configuration:
 
 ```json
 [
   {
-    "AllowedOrigins": ["https://your-frontend.vercel.app", "http://localhost:5173"],
-    "AllowedMethods": ["PUT", "GET"],
-    "AllowedHeaders": ["Content-Type", "Content-Length"],
+    "AllowedOrigins": [
+      "https://personal-reader.vercel.app",
+      "https://personal-reader-ql2qcfb64-nhatnd0909s-projects.vercel.app",
+      "https://readflow.vercel.app",
+      "http://localhost:5173"
+    ],
+    "AllowedMethods": ["GET", "PUT", "HEAD"],
+    "AllowedHeaders": [
+      "Content-Type",
+      "Content-Length",
+      "X-Amz-Date",
+      "Authorization",
+      "X-Amz-Security-Token"
+    ],
+    "ExposeHeaders": ["ETag"],
     "MaxAgeSeconds": 3600
   }
 ]
 ```
 
-**Important:** Replace with your actual frontend origin. Never use `*` for private buckets.
+> [!TIP]
+> - Replace or add your exact Vercel frontend URL in `AllowedOrigins`.
+> - If you test across multiple preview deployments, add your preview domains to the `AllowedOrigins` list.
+> - `AllowedMethods` must include `PUT` (for direct uploads), `GET` (for downloading files), and `HEAD`.
+> - `ExposeHeaders` should include `ETag` so the browser can read the upload checksum.
 
-## 4. Environment Variables
+---
 
-| Variable | Value |
-|----------|-------|
-| `R2_ACCOUNT_ID` | Your Cloudflare Account ID (from dashboard URL) |
-| `R2_ACCESS_KEY_ID` | From the R2 API token |
-| `R2_SECRET_ACCESS_KEY` | From the R2 API token |
-| `R2_BUCKET_NAME` | `readflow-pdfs` |
-| `R2_PUBLIC_URL` | Custom domain or R2.dev subdomain (for pre-signed GETs) |
+## 4. Backend Environment Variables
 
-## 5. File Size and Quota
+Add the following environment variables to your local `backend/.env.local` and your **Vercel Backend Project (`readflow-api`)** under **Settings → Environment Variables**:
 
-- Max PDF size: configurable via `MAX_PDF_SIZE_BYTES` (default 50 MB)
-- R2 free: 10 GB total storage
-- Monitor storage use in the Cloudflare R2 dashboard
-- Pre-signed PUT URLs expire after 15 minutes
+| Variable Name | Required? | Example Value | Description |
+|---|---|---|---|
+| `R2_ACCOUNT_ID` | **Yes** | `a1b2c3d4e5f6g7h8...` | Cloudflare Account ID (found in Cloudflare URL or R2 overview) |
+| `R2_ACCESS_KEY_ID` | **Yes** | `1a2b3c4d5e...` | R2 API Token Access Key ID |
+| `R2_SECRET_ACCESS_KEY` | **Yes** | `9z8y7x6w5v...` | R2 API Token Secret Access Key |
+| `R2_BUCKET_NAME` | **Yes** | `readflow-pdfs` | Target R2 bucket name |
+| `R2_ENDPOINT` | No | `https://<ACCOUNT_ID>.r2.cloudflarestorage.com` | Optional if `R2_ACCOUNT_ID` is set |
+| `R2_REGION` | No | `auto` | Cloudflare R2 region (default `auto`) |
+| `R2_PRESIGNED_URL_EXPIRES_IN` | No | `900` | Pre-signed upload URL lifespan in seconds (default 15m) |
+| `MAX_PDF_SIZE_BYTES` | No | `52428800` | Max file size in bytes (50 MB) |
+| `MAX_USER_STORAGE_BYTES` | No | `524288000` | Max total storage per user in bytes (500 MB) |
+
+> [!CAUTION]
+> Never add `R2_SECRET_ACCESS_KEY` or `R2_ACCESS_KEY_ID` to the frontend! Pre-signed URLs generated by the backend allow the browser to upload without ever knowing storage credentials.

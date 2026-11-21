@@ -12,6 +12,8 @@ import { corsOptions } from './config/cors.js'
 import { errorHandler } from './middleware/errorHandler.js'
 import healthRouter from './modules/health/health.routes.js'
 import authRouter from './modules/auth/auth.routes.js'
+import uploadsRouter from './modules/uploads/uploads.routes.js'
+import booksRouter from './modules/books/books.routes.js'
 
 const app = express()
 
@@ -49,6 +51,8 @@ app.use(globalLimiter)
 // ─── Routes ────────────────────────────────────────────────────────────────
 app.use('/api/v1/health', healthRouter)
 app.use('/api/v1/auth', authRouter)
+app.use('/api/v1/uploads', uploadsRouter)
+app.use('/api/v1/books', booksRouter)
 
 // 404 fallback
 app.use((_req, res) => {

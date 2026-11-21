@@ -25,7 +25,9 @@ model User {
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
 
-  refreshTokens RefreshToken[]
+  refreshTokens  RefreshToken[]
+  books          Book[]
+  uploadSessions UploadSession[]
 
   @@index([email])
   @@map("users")
@@ -46,4 +48,75 @@ model RefreshToken {
   @@index([userId])
   @@index([family])
   @@map("refresh_tokens")
+}
+
+// ─── Books ────────────────────────────────────────────────────────────────────
+model Book {
+  id               String    @id @default(uuid()) @db.Uuid
+  userId           String    @map("user_id") @db.Uuid
+  title            String
+  author           String?
+  description      String?
+  originalFileName String    @map("original_file_name")
+  coverImageUrl    String?   @map("cover_image_url")
+  status           String    @default("pending") // "pending" | "ready" | "error" | "deleted"
+  pageCount        Int?      @map("page_count")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+  deletedAt        DateTime? @map("deleted_at")
+
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  files          BookFile[]
+  uploadSessions UploadSession[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([userId, status, createdAt])
+  @@map("books")
+}
+
+// ─── Book Files (Storage & Cloudflare R2 Metadata) ─────────────────────────────
+model BookFile {
+  id               String   @id @default(uuid()) @db.Uuid
+  bookId           String   @map("book_id") @db.Uuid
+  storageProvider  String   @default("r2") @map("storage_provider")
+  bucket           String
+  objectKey        String   @unique @map("object_key")
+  originalFileName String   @map("original_file_name")
+  mimeType         String   @default("application/pdf") @map("mime_type")
+  fileSize         Int      @map("file_size") // In bytes
+  checksum         String?  // ETag or sha256
+  uploadStatus     String   @default("completed") @map("upload_status")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  book Book @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+  @@index([bookId])
+  @@index([objectKey])
+  @@map("book_files")
+}
+
+// ─── Upload Sessions (Pre-signed Upload Lifecycle & Quota Tracking) ───────────
+model UploadSession {
+  id               String    @id @default(uuid()) @db.Uuid
+  userId           String    @map("user_id") @db.Uuid
+  bookId           String?   @map("book_id") @db.Uuid
+  objectKey        String    @unique @map("object_key")
+  originalFileName String    @map("original_file_name")
+  mimeType         String    @default("application/pdf") @map("mime_type")
+  expectedFileSize Int       @map("expected_file_size") // In bytes
+  status           String    @default("pending") // "pending" | "completed" | "cancelled" | "expired" | "failed"
+  expiresAt        DateTime  @map("expires_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  user User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  book Book? @relation(fields: [bookId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([objectKey])
+  @@index([status])
+  @@index([expiresAt])
+  @@map("upload_sessions")
 }
