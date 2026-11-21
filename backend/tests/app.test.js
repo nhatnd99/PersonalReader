@@ -55,4 +55,29 @@ test('Backend Express App Integration & Smoke Test', async (t) => {
     })
     assert.strictEqual(res.status, 403)
   })
+
+  await t.test('CORS allows Vercel preview domain and returns CORP cross-origin', async () => {
+    const vercelOrigin = 'https://personal-reader-ql2qcfb64-nhatnd0909s-projects.vercel.app'
+    const res = await fetch(`${baseUrl}/api/v1/health`, {
+      headers: { Origin: vercelOrigin },
+    })
+    assert.strictEqual(res.status, 200)
+    assert.strictEqual(res.headers.get('access-control-allow-origin'), vercelOrigin)
+    assert.strictEqual(res.headers.get('cross-origin-resource-policy'), 'cross-origin')
+  })
+
+  await t.test('CORS preflight OPTIONS on /api/v1/auth/register succeeds', async () => {
+    const vercelOrigin = 'https://personal-reader-ql2qcfb64-nhatnd0909s-projects.vercel.app'
+    const res = await fetch(`${baseUrl}/api/v1/auth/register`, {
+      method: 'OPTIONS',
+      headers: {
+        Origin: vercelOrigin,
+        'Access-Control-Request-Method': 'POST',
+        'Access-Control-Request-Headers': 'Content-Type',
+      },
+    })
+    assert.strictEqual(res.status, 204)
+    assert.strictEqual(res.headers.get('access-control-allow-origin'), vercelOrigin)
+    assert.strictEqual(res.headers.get('access-control-allow-credentials'), 'true')
+  })
 })

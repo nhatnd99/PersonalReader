@@ -268,34 +268,12 @@ Because the frontend (`readflow.vercel.app`) and backend (`readflow-api.vercel.a
 
 ### 6.1 Backend CORS Setup
 
-The CORS policy in [backend/src/config/cors.js](file:///c:/Users/ADMIN/Desktop/Project/PersonalReader/backend/src/config/cors.js) is dynamically configured:
+The CORS policy in [backend/src/config/cors.js](file:///c:/Users/ADMIN/Desktop/Project/PersonalReader/backend/src/config/cors.js) dynamically supports explicit origins, localhost dev, and all Vercel preview domains (`*.vercel.app`):
 
-```javascript
-const rawOrigins = process.env.FRONTEND_ORIGINS || 'http://localhost:5173'
-const allowedOrigins = rawOrigins
-  .split(',')
-  .map((o) => o.trim().replace(/\/+$/, ''))
-  .filter(Boolean)
-
-export const corsOptions = {
-  origin: (origin, callback) => {
-    if (!origin) return callback(null, true)
-    const normalizedOrigin = origin.replace(/\/+$/, '')
-    if (allowedOrigins.includes(normalizedOrigin)) return callback(null, true)
-    const error = new Error(`CORS: origin ${origin} not allowed`)
-    error.status = 403
-    callback(error)
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Refresh-Token'],
-  exposedHeaders: ['Set-Cookie'],
-}
-```
-
+- **Automatic Vercel Preview Support**: Matches production and dynamic preview URLs (e.g. `https://personal-reader-*.vercel.app`).
+- **Helmet CORP**: Configured with `crossOriginResourcePolicy: { policy: 'cross-origin' }` so modern browsers allow cross-domain fetch requests.
 - **`credentials: true`**: Allows the browser to send and receive authorization cookies and headers.
-- **Explicit Allowlist**: Wildcard (`*`) origins are prohibited when `credentials: true`.
-- **Preflight Support**: Express handles `OPTIONS` requests via `app.options('*', cors(corsOptions))` in `backend/src/app.js`.
+- **Preflight Support**: Express automatically handles `OPTIONS` requests via `cors(corsOptions)`.
 
 ### 6.2 Dual-Token Refresh Architecture
 
