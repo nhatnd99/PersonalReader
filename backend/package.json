@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "node --watch --env-file-if-exists=.env.local src/server.js",
     "start": "node src/server.js",
-    "build": "echo 'No build step needed for Node.js'",
+    "build": "prisma generate",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:migrate:deploy": "prisma migrate deploy",

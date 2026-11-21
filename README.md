@@ -40,4 +40,14 @@ npm run dev:frontend
 npm run dev:backend
 ```
 
+## Documentation
+
+- [Production Deployment Guide (Vercel & Neon)](docs/DEPLOYMENT_GUIDE.md)
+- [System Architecture](docs/SYSTEM_ARCHITECTURE.md)
+- [Database Design](docs/DATABASE_DESIGN.md)
+- [Authentication Flow](docs/AUTHENTICATION_FLOW.md)
+- [Free Tier Limits](docs/FREE_TIER_LIMITS.md)
+- [Development Setup](docs/DEVELOPMENT_SETUP.md)
+- [Implementation Plan](docs/IMPLEMENTATION_PLAN.md)
+
 See `docs/IMPLEMENTATION_PLAN.md` for the full roadmap.

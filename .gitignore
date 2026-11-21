@@ -31,3 +31,4 @@ backend/prisma/*.db-journal
 # IDE
 .vscode/
 .idea/
+.neon

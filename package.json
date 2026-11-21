@@ -2,12 +2,17 @@
   "name": "readflow",
   "version": "0.0.1",
   "private": true,
-  "description": "ReadFlow \u2013 Personal PDF reader & vocabulary PWA monorepo",
+  "description": "ReadFlow – Personal PDF reader & vocabulary PWA monorepo",
   "scripts": {
     "dev:frontend": "npm --prefix frontend run dev",
     "dev:backend": "npm --prefix backend run dev",
     "install:all": "npm --prefix frontend install; npm --prefix backend install",
+    "build": "npm run build:frontend",
     "build:frontend": "npm --prefix frontend run build",
     "build:backend": "npm --prefix backend run build"
+  },
+  "dependencies": {
+    "@neon/config": "^1.14.6",
+    "@neon/env": "^2.1.9"
   }
 }
