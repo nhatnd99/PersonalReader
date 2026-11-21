@@ -43,4 +43,16 @@ test('Backend Express App Integration & Smoke Test', async (t) => {
     assert.ok(data.timestamp)
     assert.ok(data.db)
   })
+
+  await t.test('CORS allows requests with no origin (direct browser/curl)', async () => {
+    const res = await fetch(`${baseUrl}/api/v1/health`)
+    assert.strictEqual(res.status, 200)
+  })
+
+  await t.test('CORS rejects unauthorized origin with 403', async () => {
+    const res = await fetch(`${baseUrl}/api/v1/health`, {
+      headers: { Origin: 'https://malicious-site.example.com' },
+    })
+    assert.strictEqual(res.status, 403)
+  })
 })

@@ -271,16 +271,20 @@ Because the frontend (`readflow.vercel.app`) and backend (`readflow-api.vercel.a
 The CORS policy in [backend/src/config/cors.js](file:///c:/Users/ADMIN/Desktop/Project/PersonalReader/backend/src/config/cors.js) is dynamically configured:
 
 ```javascript
-const allowedOrigins = (process.env.FRONTEND_ORIGINS || 'http://localhost:5173')
+const rawOrigins = process.env.FRONTEND_ORIGINS || 'http://localhost:5173'
+const allowedOrigins = rawOrigins
   .split(',')
-  .map((o) => o.trim())
+  .map((o) => o.trim().replace(/\/+$/, ''))
   .filter(Boolean)
 
 export const corsOptions = {
   origin: (origin, callback) => {
-    if (!origin && process.env.NODE_ENV !== 'production') return callback(null, true)
-    if (allowedOrigins.includes(origin)) return callback(null, true)
-    callback(new Error(`CORS: origin ${origin} not allowed`))
+    if (!origin) return callback(null, true)
+    const normalizedOrigin = origin.replace(/\/+$/, '')
+    if (allowedOrigins.includes(normalizedOrigin)) return callback(null, true)
+    const error = new Error(`CORS: origin ${origin} not allowed`)
+    error.status = 403
+    callback(error)
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],

@@ -3,21 +3,27 @@
  * Reads allowed origins from FRONTEND_ORIGINS env variable.
  * Never hardcode production domains here – use environment variables.
  */
-const allowedOrigins = (process.env.FRONTEND_ORIGINS || 'http://localhost:5173')
+const rawOrigins = process.env.FRONTEND_ORIGINS || 'http://localhost:5173'
+const allowedOrigins = rawOrigins
   .split(',')
-  .map((o) => o.trim())
+  .map((o) => o.trim().replace(/\/+$/, ''))
   .filter(Boolean)
 
 export const corsOptions = {
   origin: (origin, callback) => {
-    // Allow requests with no origin (e.g., curl, Postman) only in development/test
-    if (!origin && process.env.NODE_ENV !== 'production') {
+    // Allow requests with no origin (e.g., direct browser visits, curl, Postman, health checks)
+    if (!origin) {
       return callback(null, true)
     }
-    if (allowedOrigins.includes(origin)) {
+
+    const normalizedOrigin = origin.replace(/\/+$/, '')
+    if (allowedOrigins.includes(normalizedOrigin)) {
       return callback(null, true)
     }
-    callback(new Error(`CORS: origin ${origin} not allowed`))
+
+    const error = new Error(`CORS: origin ${origin} not allowed`)
+    error.status = 403
+    callback(error)
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
