@@ -47,6 +47,7 @@ export default defineConfig({
         ],
         // Never cache private API responses in service worker
         navigateFallback: '/index.html',
+        navigateFallbackDenylist: [/^\/api\//],
       },
     }),
   ],

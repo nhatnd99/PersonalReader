@@ -369,7 +369,7 @@ test('Phase 2: Book Library & Cloudflare R2 Upload Test Suite', async (t) => {
     assert.strictEqual(res.status, 403)
   })
 
-  await t.test('Books: PATCH /api/v1/books/:bookId updates metadata', async () => {
+  await t.test('Books: PATCH /api/v1/books/:bookId updates metadata including language', async () => {
     const res = await fetch(`${baseUrl}/api/v1/books/${activeBookId}`, {
       method: 'PATCH',
       headers: {
@@ -379,15 +379,26 @@ test('Phase 2: Book Library & Cloudflare R2 Upload Test Suite', async (t) => {
       body: JSON.stringify({
         title: 'Pride and Prejudice (Annotated Edition)',
         author: 'Jane Austen & Editors',
+        language: 'English',
       }),
     })
     assert.strictEqual(res.status, 200)
     const data = await res.json()
     assert.strictEqual(data.book.title, 'Pride and Prejudice (Annotated Edition)')
     assert.strictEqual(data.book.author, 'Jane Austen & Editors')
+    assert.strictEqual(data.book.language, 'English')
   })
 
-  await t.test('Books: GET /api/v1/books/:bookId/download-url returns signed URL', async () => {
+  await t.test('Books: GET /api/v1/books?sort=updated returns books sorted by updatedAt', async () => {
+    const res = await fetch(`${baseUrl}/api/v1/books?sort=updated`, {
+      headers: { Authorization: `Bearer ${userToken}` },
+    })
+    assert.strictEqual(res.status, 200)
+    const data = await res.json()
+    assert.strictEqual(data.books.length, 1)
+  })
+
+  await t.test('Books: GET /api/v1/books/:bookId/download-url and /file-url return signed URL', async () => {
     const res = await fetch(`${baseUrl}/api/v1/books/${activeBookId}/download-url`, {
       headers: { Authorization: `Bearer ${userToken}` },
     })
@@ -396,6 +407,13 @@ test('Phase 2: Book Library & Cloudflare R2 Upload Test Suite', async (t) => {
     assert.ok(data.downloadUrl)
     assert.strictEqual(data.fileName, 'pride_and_prejudice.pdf')
     assert.strictEqual(data.expiresIn, 300)
+
+    const aliasRes = await fetch(`${baseUrl}/api/v1/books/${activeBookId}/file-url`, {
+      headers: { Authorization: `Bearer ${userToken}` },
+    })
+    assert.strictEqual(aliasRes.status, 200)
+    const aliasData = await aliasRes.json()
+    assert.ok(aliasData.downloadUrl)
   })
 
   await t.test('Books: DELETE /api/v1/books/:bookId soft-deletes book', async () => {
@@ -417,5 +435,43 @@ test('Phase 2: Book Library & Cloudflare R2 Upload Test Suite', async (t) => {
     })
     const listData = await listRes.json()
     assert.strictEqual(listData.books.length, 0)
+  })
+
+  await t.test('Upload: Expired session is rejected on complete and cancel cleans up pending book', async () => {
+    const initRes = await fetch(`${baseUrl}/api/v1/uploads/initiate`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${userToken}`,
+      },
+      body: JSON.stringify({
+        fileName: 'temp_expired.pdf',
+        fileSize: 12000,
+        mimeType: 'application/pdf',
+        title: 'Temporary Expired Book',
+      }),
+    })
+    assert.strictEqual(initRes.status, 201)
+    const initData = await initRes.json()
+
+    // Force expire in DB
+    await prisma.uploadSession.update({
+      where: { id: initData.uploadId },
+      data: { expiresAt: new Date(Date.now() - 60_000) },
+    })
+
+    const completeRes = await fetch(`${baseUrl}/api/v1/uploads/${initData.uploadId}/complete`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${userToken}` },
+    })
+    assert.strictEqual(completeRes.status, 400)
+    const completeErr = await completeRes.json()
+    assert.ok(completeErr.error.includes('expired'))
+
+    const cancelRes = await fetch(`${baseUrl}/api/v1/uploads/${initData.uploadId}/cancel`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${userToken}` },
+    })
+    assert.strictEqual(cancelRes.status, 200)
   })
 })

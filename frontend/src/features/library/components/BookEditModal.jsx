@@ -4,6 +4,7 @@ import { BooksService } from '../services/books.service.js'
 export default function BookEditModal({ book, isOpen, onClose, onUpdated }) {
   const [title, setTitle] = useState('')
   const [author, setAuthor] = useState('')
+  const [language, setLanguage] = useState('')
   const [description, setDescription] = useState('')
   const [isSaving, setIsSaving] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
@@ -12,6 +13,7 @@ export default function BookEditModal({ book, isOpen, onClose, onUpdated }) {
     if (book) {
       setTitle(book.title || '')
       setAuthor(book.author || '')
+      setLanguage(book.language || '')
       setDescription(book.description || '')
       setErrorMessage('')
     }
@@ -33,6 +35,7 @@ export default function BookEditModal({ book, isOpen, onClose, onUpdated }) {
       const updated = await BooksService.updateBook(book.id, {
         title: title.trim(),
         author: author.trim() || null,
+        language: language.trim() || null,
         description: description.trim() || null,
       })
 
@@ -48,38 +51,22 @@ export default function BookEditModal({ book, isOpen, onClose, onUpdated }) {
 
   return (
     <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 1000,
-        padding: '1rem',
-      }}
+      className="rf-modal-backdrop"
       onClick={(e) => {
         if (e.target === e.currentTarget && !isSaving) onClose()
       }}
     >
-      <div
-        style={{
-          background: '#fff',
-          borderRadius: '12px',
-          width: '100%',
-          maxWidth: '480px',
-          padding: '1.75rem',
-          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
-        }}
-      >
+      <div className="rf-modal-card" role="dialog" aria-modal="true" aria-labelledby="edit-book-title">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0, color: '#111827' }}>
+          <h2 id="edit-book-title" style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0, color: '#0f172a' }}>
             Edit Book Details
           </h2>
           {!isSaving && (
             <button
+              type="button"
               onClick={onClose}
-              style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: '#666' }}
+              aria-label="Close edit modal"
+              style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: '#64748b' }}
             >
               ×
             </button>
@@ -104,7 +91,7 @@ export default function BookEditModal({ book, isOpen, onClose, onUpdated }) {
 
         <form onSubmit={handleSave}>
           <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#374151', marginBottom: '0.35rem' }}>
+            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#334155', marginBottom: '0.35rem' }}>
               Title *
             </label>
             <input
@@ -115,38 +102,61 @@ export default function BookEditModal({ book, isOpen, onClose, onUpdated }) {
               required
               style={{
                 width: '100%',
-                padding: '0.6rem 0.75rem',
+                minHeight: '42px',
+                padding: '0.55rem 0.75rem',
                 borderRadius: '6px',
-                border: '1px solid #d1d5db',
+                border: '1px solid #cbd5e1',
                 fontSize: '0.9rem',
-                boxSizing: 'border-box',
               }}
             />
           </div>
 
-          <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#374151', marginBottom: '0.35rem' }}>
-              Author
-            </label>
-            <input
-              type="text"
-              value={author}
-              onChange={(e) => setAuthor(e.target.value)}
-              disabled={isSaving}
-              placeholder="Author name"
-              style={{
-                width: '100%',
-                padding: '0.6rem 0.75rem',
-                borderRadius: '6px',
-                border: '1px solid #d1d5db',
-                fontSize: '0.9rem',
-                boxSizing: 'border-box',
-              }}
-            />
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.85rem', marginBottom: '1rem' }}>
+            <div>
+              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#334155', marginBottom: '0.35rem' }}>
+                Author
+              </label>
+              <input
+                type="text"
+                value={author}
+                onChange={(e) => setAuthor(e.target.value)}
+                disabled={isSaving}
+                placeholder="Author name"
+                style={{
+                  width: '100%',
+                  minHeight: '42px',
+                  padding: '0.55rem 0.75rem',
+                  borderRadius: '6px',
+                  border: '1px solid #cbd5e1',
+                  fontSize: '0.9rem',
+                }}
+              />
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#334155', marginBottom: '0.35rem' }}>
+                Language
+              </label>
+              <input
+                type="text"
+                value={language}
+                onChange={(e) => setLanguage(e.target.value)}
+                disabled={isSaving}
+                placeholder="e.g. English"
+                style={{
+                  width: '100%',
+                  minHeight: '42px',
+                  padding: '0.55rem 0.75rem',
+                  borderRadius: '6px',
+                  border: '1px solid #cbd5e1',
+                  fontSize: '0.9rem',
+                }}
+              />
+            </div>
           </div>
 
           <div style={{ marginBottom: '1.5rem' }}>
-            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#374151', marginBottom: '0.35rem' }}>
+            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#334155', marginBottom: '0.35rem' }}>
               Description
             </label>
             <textarea
@@ -159,9 +169,8 @@ export default function BookEditModal({ book, isOpen, onClose, onUpdated }) {
                 width: '100%',
                 padding: '0.6rem 0.75rem',
                 borderRadius: '6px',
-                border: '1px solid #d1d5db',
+                border: '1px solid #cbd5e1',
                 fontSize: '0.9rem',
-                boxSizing: 'border-box',
                 fontFamily: 'inherit',
               }}
             />
@@ -173,11 +182,12 @@ export default function BookEditModal({ book, isOpen, onClose, onUpdated }) {
               onClick={onClose}
               disabled={isSaving}
               style={{
+                minHeight: '42px',
                 padding: '0.55rem 1.15rem',
-                borderRadius: '6px',
-                border: '1px solid #d1d5db',
+                borderRadius: '8px',
+                border: '1px solid #cbd5e1',
                 backgroundColor: '#fff',
-                color: '#374151',
+                color: '#334155',
                 fontSize: '0.875rem',
                 fontWeight: 600,
                 cursor: 'pointer',
@@ -188,16 +198,7 @@ export default function BookEditModal({ book, isOpen, onClose, onUpdated }) {
             <button
               type="submit"
               disabled={isSaving}
-              style={{
-                padding: '0.55rem 1.15rem',
-                borderRadius: '6px',
-                border: 'none',
-                backgroundColor: '#2563eb',
-                color: '#fff',
-                fontSize: '0.875rem',
-                fontWeight: 600,
-                cursor: isSaving ? 'wait' : 'pointer',
-              }}
+              className="rf-btn-primary"
             >
               {isSaving ? 'Saving…' : 'Save Changes'}
             </button>

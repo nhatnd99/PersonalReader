@@ -26,6 +26,8 @@ export class BooksService {
     let orderBy = { createdAt: 'desc' }
     if (sort === 'oldest') {
       orderBy = { createdAt: 'asc' }
+    } else if (sort === 'updated') {
+      orderBy = { updatedAt: 'desc' }
     } else if (sort === 'title') {
       orderBy = { title: 'asc' }
     }
@@ -92,7 +94,7 @@ export class BooksService {
   /**
    * Update book metadata (title, author, description).
    */
-  static async updateBook({ bookId, userId, title, author, description }) {
+  static async updateBook({ bookId, userId, title, author, description, language }) {
     // 1. Verify existence and ownership
     await this.getBookById({ bookId, userId })
 
@@ -100,6 +102,7 @@ export class BooksService {
     if (title !== undefined) updateData.title = title.trim()
     if (author !== undefined) updateData.author = author ? author.trim() : null
     if (description !== undefined) updateData.description = description ? description.trim() : null
+    if (language !== undefined) updateData.language = language ? language.trim() : null
 
     const updatedBook = await prisma.book.update({
       where: { id: bookId },

@@ -4,7 +4,7 @@ export const listBooksQuerySchema = z.object({
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().positive().max(100).default(20),
   search: z.string().trim().optional(),
-  sort: z.enum(['newest', 'oldest', 'title']).default('newest'),
+  sort: z.enum(['newest', 'oldest', 'updated', 'title']).default('newest'),
 })
 
 export const updateBookSchema = z.object({
@@ -24,6 +24,12 @@ export const updateBookSchema = z.object({
     .string()
     .trim()
     .max(1000, 'Description cannot exceed 1000 characters')
+    .optional()
+    .nullable(),
+  language: z
+    .string()
+    .trim()
+    .max(50, 'Language cannot exceed 50 characters')
     .optional()
     .nullable(),
 })

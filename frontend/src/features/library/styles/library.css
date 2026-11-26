@@ -1,0 +1,424 @@
+/* ReadFlow Book Library – Responsive Styles (PC + Mobile + PWA) */
+
+.rf-app-shell {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background-color: #f8fafc;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  overflow-x: hidden;
+}
+
+.rf-header {
+  background-color: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  padding: calc(0.75rem + env(safe-area-inset-top, 0px)) 1rem 0.75rem;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.rf-header-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.rf-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-width: 0;
+}
+
+.rf-brand-title {
+  font-size: 1.25rem;
+  font-weight: 800;
+  margin: 0;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+}
+
+.rf-brand-subtitle {
+  font-size: 0.75rem;
+  color: #64748b;
+  display: block;
+}
+
+.rf-user-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.rf-user-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: #475569;
+}
+
+.rf-user-name {
+  font-weight: 600;
+  display: none;
+}
+
+.rf-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background-color: #dbeafe;
+  color: #1d4ed8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.rf-btn-signout {
+  min-height: 38px;
+  padding: 0.45rem 0.85rem;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #475569;
+  transition: background-color 0.15s ease;
+}
+
+.rf-btn-signout:hover {
+  background-color: #f1f5f9;
+}
+
+.rf-main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.25rem 1rem 3rem;
+}
+
+/* Library Toolbar */
+.rf-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.rf-toolbar-left {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  width: 100%;
+}
+
+.rf-search-wrap {
+  position: relative;
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
+.rf-search-input {
+  width: 100%;
+  min-height: 44px;
+  padding: 0.55rem 0.75rem 0.55rem 2.25rem;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background-color: #ffffff;
+  font-size: 0.9rem;
+  color: #0f172a;
+}
+
+.rf-search-icon {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  font-size: 0.9rem;
+  pointer-events: none;
+}
+
+.rf-sort-select {
+  min-height: 44px;
+  padding: 0.55rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background-color: #ffffff;
+  font-size: 0.875rem;
+  color: #334155;
+  cursor: pointer;
+}
+
+.rf-toolbar-right {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.rf-view-toggle {
+  display: flex;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #ffffff;
+}
+
+.rf-view-btn {
+  min-width: 44px;
+  min-height: 42px;
+  background: #ffffff;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  color: #475569;
+}
+
+.rf-view-btn.active {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.rf-btn-primary {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.55rem 1.15rem;
+  border-radius: 8px;
+  background-color: #2563eb;
+  color: #ffffff;
+  border: none;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  transition: background-color 0.15s ease;
+}
+
+.rf-btn-primary:hover:not(:disabled) {
+  background-color: #1d4ed8;
+}
+
+.rf-btn-primary:disabled {
+  background-color: #93c5fd;
+  cursor: not-allowed;
+}
+
+/* Grid & List */
+.rf-book-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+.rf-book-card {
+  background-color: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  padding: 1.15rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  cursor: pointer;
+  position: relative;
+}
+
+.rf-book-card:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+  transform: translateY(-2px);
+}
+
+.rf-book-list-item {
+  background-color: #ffffff;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  padding: 0.85rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.6rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.rf-book-list-item:hover {
+  border-color: #cbd5e1;
+  background-color: #f8fafc;
+}
+
+.rf-icon-btn {
+  min-width: 38px;
+  min-height: 38px;
+  padding: 0.35rem 0.6rem;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  background-color: #ffffff;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: #334155;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rf-icon-btn:hover {
+  background-color: #f1f5f9;
+}
+
+.rf-icon-btn.danger {
+  border-color: #fecaca;
+  color: #dc2626;
+}
+
+.rf-icon-btn.danger:hover {
+  background-color: #fef2f2;
+}
+
+/* Status & Badges */
+.rf-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.rf-badge-ready {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+.rf-badge-pending {
+  background-color: #fef9c3;
+  color: #854d0e;
+}
+
+/* Skeleton Loader */
+@keyframes rf-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.rf-skeleton-card {
+  background-color: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  padding: 1.15rem;
+  height: 175px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.rf-skeleton-line {
+  border-radius: 6px;
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: rf-shimmer 1.4s infinite linear;
+}
+
+/* Modals */
+.rf-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 0.75rem;
+  padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+}
+
+.rf-modal-card {
+  background: #ffffff;
+  border-radius: 14px;
+  width: 100%;
+  max-width: 560px;
+  max-height: 90dvh;
+  overflow-y: auto;
+  padding: 1.35rem;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.06);
+}
+
+/* Floating Non-blocking Upload Indicator */
+.rf-upload-pill {
+  position: fixed;
+  bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+  left: 1rem;
+  background-color: #0f172a;
+  color: #ffffff;
+  padding: 0.65rem 1rem;
+  border-radius: 9999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.25);
+  z-index: 950;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  border: 1px solid #334155;
+}
+
+/* Responsive Breakpoints: 390px, 768px, 1024px, 1440px */
+@media (min-width: 480px) {
+  .rf-book-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 768px) {
+  .rf-header {
+    padding: 0.875rem 1.5rem;
+  }
+  .rf-main {
+    padding: 1.75rem 1.5rem 3.5rem;
+  }
+  .rf-user-name {
+    display: inline;
+  }
+  .rf-toolbar {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .rf-toolbar-left {
+    width: auto;
+    flex: 1;
+  }
+  .rf-search-wrap {
+    max-width: 360px;
+  }
+  .rf-book-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.25rem;
+  }
+  .rf-modal-card {
+    padding: 1.75rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .rf-book-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}

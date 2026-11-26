@@ -25,38 +25,20 @@ export default function BookDeleteModal({ book, isOpen, onClose, onDeleted }) {
 
   return (
     <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 1000,
-        padding: '1rem',
-      }}
+      className="rf-modal-backdrop"
       onClick={(e) => {
         if (e.target === e.currentTarget && !isDeleting) onClose()
       }}
     >
-      <div
-        style={{
-          background: '#fff',
-          borderRadius: '12px',
-          width: '100%',
-          maxWidth: '440px',
-          padding: '1.75rem',
-          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
-        }}
-      >
+      <div className="rf-modal-card" style={{ maxWidth: '440px' }} role="dialog" aria-modal="true" aria-labelledby="delete-book-title">
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
           <span style={{ fontSize: '1.75rem' }}>⚠️</span>
-          <h2 style={{ fontSize: '1.2rem', fontWeight: 700, margin: 0, color: '#111827' }}>
+          <h2 id="delete-book-title" style={{ fontSize: '1.2rem', fontWeight: 700, margin: 0, color: '#0f172a' }}>
             Delete Book
           </h2>
         </div>
 
-        <p style={{ color: '#4b5563', fontSize: '0.9rem', lineHeight: '1.5', margin: '0 0 1rem 0' }}>
+        <p style={{ color: '#475569', fontSize: '0.9rem', lineHeight: '1.5', margin: '0 0 1rem 0' }}>
           Are you sure you want to delete <strong>&ldquo;{book.title}&rdquo;</strong>? This action will remove the PDF file from Cloudflare R2 storage and cannot be undone.
         </p>
 
@@ -82,11 +64,12 @@ export default function BookDeleteModal({ book, isOpen, onClose, onDeleted }) {
             onClick={onClose}
             disabled={isDeleting}
             style={{
+              minHeight: '42px',
               padding: '0.55rem 1.15rem',
-              borderRadius: '6px',
-              border: '1px solid #d1d5db',
+              borderRadius: '8px',
+              border: '1px solid #cbd5e1',
               backgroundColor: '#fff',
-              color: '#374151',
+              color: '#334155',
               fontSize: '0.875rem',
               fontWeight: 600,
               cursor: 'pointer',
@@ -99,8 +82,9 @@ export default function BookDeleteModal({ book, isOpen, onClose, onDeleted }) {
             onClick={handleDelete}
             disabled={isDeleting}
             style={{
+              minHeight: '42px',
               padding: '0.55rem 1.15rem',
-              borderRadius: '6px',
+              borderRadius: '8px',
               border: 'none',
               backgroundColor: '#ef4444',
               color: '#fff',

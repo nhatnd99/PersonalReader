@@ -1,4 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
+import fs from 'node:fs'
+import path from 'node:path'
 import { formatBytes, formatDate, cleanFileNameToTitle } from '../src/features/library/utils/formatters.js'
 
 describe('Phase 2 Frontend Library Utilities & Upload Logic', () => {
@@ -82,5 +84,13 @@ describe('Phase 2 Frontend Library Utilities & Upload Logic', () => {
 
     advancePhase('success')
     expect(currentPhase).toBe('success')
+  })
+
+  it('verifies PWA icons exist for manifest installability', () => {
+    const publicDir = path.resolve(process.cwd(), 'public')
+    expect(fs.existsSync(path.join(publicDir, 'icons/icon-192.png'))).toBe(true)
+    expect(fs.existsSync(path.join(publicDir, 'icons/icon-512.png'))).toBe(true)
+    expect(fs.existsSync(path.join(publicDir, 'apple-touch-icon.png'))).toBe(true)
+    expect(fs.existsSync(path.join(publicDir, 'favicon.ico'))).toBe(true)
   })
 })

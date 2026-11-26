@@ -59,6 +59,7 @@ model Book {
   description      String?
   originalFileName String    @map("original_file_name")
   coverImageUrl    String?   @map("cover_image_url")
+  language         String?
   status           String    @default("pending") // "pending" | "ready" | "error" | "deleted"
   pageCount        Int?      @map("page_count")
   createdAt        DateTime  @default(now()) @map("created_at")
