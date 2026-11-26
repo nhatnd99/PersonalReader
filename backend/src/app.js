@@ -53,6 +53,7 @@ app.use('/api/v1/health', healthRouter)
 app.use('/api/v1/auth', authRouter)
 app.use('/api/v1/uploads', uploadsRouter)
 app.use('/api/v1/books', booksRouter)
+app.use('/api/books', booksRouter)
 
 // 404 fallback
 app.use((_req, res) => {

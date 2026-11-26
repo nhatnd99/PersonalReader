@@ -96,7 +96,7 @@ export default function LibraryView() {
   }
 
   const activeUploadsCount = uploadQueue.filter((i) =>
-    ['initiating', 'uploading', 'verifying'].includes(i.status)
+    ['uploading', 'processing'].includes(i.status)
   ).length
 
   return (
@@ -271,7 +271,7 @@ export default function LibraryView() {
           <p style={{ color: '#64748b', fontSize: '0.9rem', margin: '0 auto 1.25rem', maxWidth: '400px' }}>
             {debouncedSearch
               ? 'Try searching with another keyword or clear the search filter.'
-              : 'Upload your favorite English PDF books to Cloudflare R2 storage to begin reading and learning.'}
+              : 'Import your favorite English PDF books to convert them into clean, responsive HTML for reading.'}
           </p>
           {!debouncedSearch && (
             <button

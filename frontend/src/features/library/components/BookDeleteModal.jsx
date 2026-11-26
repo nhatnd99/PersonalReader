@@ -39,7 +39,7 @@ export default function BookDeleteModal({ book, isOpen, onClose, onDeleted }) {
         </div>
 
         <p style={{ color: '#475569', fontSize: '0.9rem', lineHeight: '1.5', margin: '0 0 1rem 0' }}>
-          Are you sure you want to delete <strong>&ldquo;{book.title}&rdquo;</strong>? This action will remove the PDF file from Cloudflare R2 storage and cannot be undone.
+          Are you sure you want to delete <strong>&ldquo;{book.title}&rdquo;</strong>? This action will permanently remove the book and its structured content and cannot be undone.
         </p>
 
         {errorMessage && (

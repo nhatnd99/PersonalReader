@@ -28,6 +28,7 @@ model User {
   refreshTokens  RefreshToken[]
   books          Book[]
   uploadSessions UploadSession[]
+  importJobs     BookImportJob[]
 
   @@index([email])
   @@map("users")
@@ -60,8 +61,11 @@ model Book {
   originalFileName String    @map("original_file_name")
   coverImageUrl    String?   @map("cover_image_url")
   language         String?
-  status           String    @default("pending") // "pending" | "ready" | "error" | "deleted"
+  status           String    @default("pending") // Legacy/compatibility: "pending" | "ready" | "error" | "deleted"
+  processingStatus String    @default("PENDING") @map("processing_status") // "PENDING" | "UPLOADING" | "PROCESSING" | "COMPLETED" | "FAILED" | "NEEDS_OCR" | "CANCELLED"
   pageCount        Int?      @map("page_count")
+  totalPages       Int?      @map("total_pages")
+  totalWords       Int?      @map("total_words")
   createdAt        DateTime  @default(now()) @map("created_at")
   updatedAt        DateTime  @updatedAt @map("updated_at")
   deletedAt        DateTime? @map("deleted_at")
@@ -69,14 +73,75 @@ model Book {
   user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   files          BookFile[]
   uploadSessions UploadSession[]
+  contents       BookContent[]
+  chapters       BookChapter[]
+  importJobs     BookImportJob[]
 
   @@index([userId])
   @@index([status])
+  @@index([processingStatus])
   @@index([userId, status, createdAt])
   @@map("books")
 }
 
-// ─── Book Files (Storage & Cloudflare R2 Metadata) ─────────────────────────────
+// ─── Book Contents (Ordered Sanitized HTML Chunks) ────────────────────────────
+model BookContent {
+  id              String   @id @default(uuid()) @db.Uuid
+  bookId          String   @map("book_id") @db.Uuid
+  sequence        Int
+  contentHtml     String   @map("content_html") @db.Text
+  plainText       String   @map("plain_text") @db.Text
+  sourcePageStart Int      @map("source_page_start")
+  sourcePageEnd   Int      @map("source_page_end")
+  wordCount       Int      @map("word_count")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  book Book @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+  @@unique([bookId, sequence])
+  @@index([bookId, sequence])
+  @@map("book_contents")
+}
+
+// ─── Book Chapters (Detected Structural Navigation) ───────────────────────────
+model BookChapter {
+  id                   String @id @default(uuid()) @db.Uuid
+  bookId               String @map("book_id") @db.Uuid
+  title                String
+  sequence             Int
+  startContentSequence Int    @map("start_content_sequence")
+  endContentSequence   Int    @map("end_content_sequence")
+
+  book Book @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+  @@unique([bookId, sequence])
+  @@index([bookId, sequence])
+  @@map("book_chapters")
+}
+
+// ─── Book Import Jobs (In-Memory Processing Lifecycle) ────────────────────────
+model BookImportJob {
+  id           String    @id @default(uuid()) @db.Uuid
+  userId       String    @map("user_id") @db.Uuid
+  bookId       String?   @map("book_id") @db.Uuid
+  status       String    @default("PENDING") // "PENDING" | "UPLOADING" | "PROCESSING" | "COMPLETED" | "FAILED" | "NEEDS_OCR" | "CANCELLED"
+  progress     Int       @default(0)
+  currentStep  String?   @map("current_step")
+  errorMessage String?   @map("error_message")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  completedAt  DateTime? @map("completed_at")
+
+  user User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  book Book? @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([bookId])
+  @@index([status])
+  @@map("book_import_jobs")
+}
+
+// ─── Legacy Storage Models (Preserved for safe non-destructive schema history)
 model BookFile {
   id               String   @id @default(uuid()) @db.Uuid
   bookId           String   @map("book_id") @db.Uuid
@@ -85,8 +150,8 @@ model BookFile {
   objectKey        String   @unique @map("object_key")
   originalFileName String   @map("original_file_name")
   mimeType         String   @default("application/pdf") @map("mime_type")
-  fileSize         Int      @map("file_size") // In bytes
-  checksum         String?  // ETag or sha256
+  fileSize         Int      @map("file_size")
+  checksum         String?
   uploadStatus     String   @default("completed") @map("upload_status")
   createdAt        DateTime @default(now()) @map("created_at")
   updatedAt        DateTime @updatedAt @map("updated_at")
@@ -98,19 +163,18 @@ model BookFile {
   @@map("book_files")
 }
 
-// ─── Upload Sessions (Pre-signed Upload Lifecycle & Quota Tracking) ───────────
 model UploadSession {
-  id               String    @id @default(uuid()) @db.Uuid
-  userId           String    @map("user_id") @db.Uuid
-  bookId           String?   @map("book_id") @db.Uuid
-  objectKey        String    @unique @map("object_key")
-  originalFileName String    @map("original_file_name")
-  mimeType         String    @default("application/pdf") @map("mime_type")
-  expectedFileSize Int       @map("expected_file_size") // In bytes
-  status           String    @default("pending") // "pending" | "completed" | "cancelled" | "expired" | "failed"
-  expiresAt        DateTime  @map("expires_at")
-  createdAt        DateTime  @default(now()) @map("created_at")
-  updatedAt        DateTime  @updatedAt @map("updated_at")
+  id               String   @id @default(uuid()) @db.Uuid
+  userId           String   @map("user_id") @db.Uuid
+  bookId           String?  @map("book_id") @db.Uuid
+  objectKey        String   @unique @map("object_key")
+  originalFileName String   @map("original_file_name")
+  mimeType         String   @default("application/pdf") @map("mime_type")
+  expectedFileSize Int      @map("expected_file_size")
+  status           String   @default("pending")
+  expiresAt        DateTime @map("expires_at")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
 
   user User  @relation(fields: [userId], references: [id], onDelete: Cascade)
   book Book? @relation(fields: [bookId], references: [id], onDelete: SetNull)

@@ -1,10 +1,44 @@
-import React from 'react'
-import { formatBytes, formatDate } from '../utils/formatters.js'
+import React, { useState, useEffect } from 'react'
+import { BooksService } from '../services/books.service.js'
+import { formatDate } from '../utils/formatters.js'
 
-export default function BookDetailsModal({ book, isOpen, onClose, onDownload, onEdit, onDelete }) {
+export default function BookDetailsModal({ book, isOpen, onClose, onEdit, onDelete }) {
+  const [chapters, setChapters] = useState([])
+  const [previewChunk, setPreviewChunk] = useState(null)
+  const [showPreview, setShowPreview] = useState(false)
+  const [loadingPreview, setLoadingPreview] = useState(false)
+
+  useEffect(() => {
+    setShowPreview(false)
+    setPreviewChunk(null)
+    setChapters([])
+  }, [book?.id, isOpen])
+
   if (!isOpen || !book) return null
 
-  const file = book.files?.[0]
+  const handleTogglePreview = async () => {
+    if (showPreview) {
+      setShowPreview(false)
+      return
+    }
+
+    setShowPreview(true)
+    if (previewChunk) return
+
+    setLoadingPreview(true)
+    try {
+      const [chaptersList, contentsData] = await Promise.all([
+        BooksService.getBookChapters(book.id),
+        BooksService.getBookContents(book.id, { page: 1, limit: 1 }),
+      ])
+      setChapters(chaptersList || [])
+      setPreviewChunk(contentsData.contents?.[0] || null)
+    } catch (_) {
+      // Ignore preview load errors
+    } finally {
+      setLoadingPreview(false)
+    }
+  }
 
   return (
     <div
@@ -61,7 +95,7 @@ export default function BookDetailsModal({ book, isOpen, onClose, onDownload, on
             marginBottom: '1.25rem',
             fontSize: '0.875rem',
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
             gap: '0.75rem',
           }}
         >
@@ -69,14 +103,20 @@ export default function BookDetailsModal({ book, isOpen, onClose, onDownload, on
             <div style={{ color: '#64748b', fontSize: '0.75rem', fontWeight: 600 }}>STATUS</div>
             <div style={{ marginTop: '0.2rem' }}>
               <span className={`rf-badge ${book.status === 'ready' ? 'rf-badge-ready' : 'rf-badge-pending'}`}>
-                {book.status === 'ready' ? 'Unread • Ready' : book.status}
+                {book.processingStatus || book.status}
               </span>
             </div>
           </div>
           <div>
-            <div style={{ color: '#64748b', fontSize: '0.75rem', fontWeight: 600 }}>FILE SIZE</div>
+            <div style={{ color: '#64748b', fontSize: '0.75rem', fontWeight: 600 }}>PAGES</div>
             <div style={{ marginTop: '0.2rem', fontWeight: 600, color: '#0f172a' }}>
-              {file ? formatBytes(file.fileSize) : '—'}
+              {book.totalPages ?? book.pageCount ?? '—'}
+            </div>
+          </div>
+          <div>
+            <div style={{ color: '#64748b', fontSize: '0.75rem', fontWeight: 600 }}>WORDS</div>
+            <div style={{ marginTop: '0.2rem', fontWeight: 600, color: '#0f172a' }}>
+              {book.totalWords ? book.totalWords.toLocaleString() : '—'}
             </div>
           </div>
           <div>
@@ -86,22 +126,54 @@ export default function BookDetailsModal({ book, isOpen, onClose, onDownload, on
             </div>
           </div>
           <div>
-            <div style={{ color: '#64748b', fontSize: '0.75rem', fontWeight: 600 }}>DATE ADDED</div>
+            <div style={{ color: '#64748b', fontSize: '0.75rem', fontWeight: 600 }}>ADDED</div>
             <div style={{ marginTop: '0.2rem', fontWeight: 600, color: '#0f172a' }}>
               {formatDate(book.createdAt)}
             </div>
           </div>
         </div>
 
-        <div style={{ marginBottom: '1.25rem' }}>
-          <div style={{ color: '#64748b', fontSize: '0.75rem', fontWeight: 600, marginBottom: '0.25rem' }}>ORIGINAL FILE</div>
-          <div style={{ fontSize: '0.85rem', color: '#334155', wordBreak: 'break-all' }}>{book.originalFileName}</div>
-        </div>
-
         {book.description && (
           <div style={{ marginBottom: '1.25rem' }}>
             <div style={{ color: '#64748b', fontSize: '0.75rem', fontWeight: 600, marginBottom: '0.25rem' }}>DESCRIPTION</div>
             <p style={{ margin: 0, fontSize: '0.875rem', color: '#334155', lineHeight: 1.5 }}>{book.description}</p>
+          </div>
+        )}
+
+        {/* Structured HTML Preview Section */}
+        {showPreview && (
+          <div
+            style={{
+              marginBottom: '1.25rem',
+              border: '1px solid #e2e8f0',
+              borderRadius: '10px',
+              padding: '1rem',
+              backgroundColor: '#ffffff',
+              maxHeight: '240px',
+              overflowY: 'auto',
+            }}
+          >
+            {loadingPreview ? (
+              <div style={{ color: '#64748b', fontSize: '0.85rem' }}>Loading structured HTML…</div>
+            ) : (
+              <>
+                {chapters.length > 0 && (
+                  <div style={{ marginBottom: '0.75rem', fontSize: '0.78rem', color: '#475569' }}>
+                    <strong>Detected Chapters ({chapters.length}):</strong>{' '}
+                    {chapters.slice(0, 5).map((c) => c.title).join(' • ')}
+                    {chapters.length > 5 ? '…' : ''}
+                  </div>
+                )}
+                {previewChunk ? (
+                  <div
+                    style={{ fontSize: '0.88rem', lineHeight: 1.65, color: '#1e293b' }}
+                    dangerouslySetInnerHTML={{ __html: previewChunk.contentHtml }}
+                  />
+                ) : (
+                  <div style={{ color: '#64748b', fontSize: '0.85rem' }}>No structured HTML chunks available.</div>
+                )}
+              </>
+            )}
           </div>
         )}
 
@@ -121,7 +193,7 @@ export default function BookDetailsModal({ book, isOpen, onClose, onDownload, on
           }}
         >
           <div style={{ fontSize: '0.82rem', color: '#1e40af' }}>
-            <strong>📖 PDF Reader:</strong> Integrated reading & vocabulary lookup coming in Phase 3.
+            <strong>📖 Reflow Reader:</strong> Full reading experience & vocabulary lookup coming in Phase 3.
           </div>
           <button
             type="button"
@@ -187,10 +259,10 @@ export default function BookDetailsModal({ book, isOpen, onClose, onDownload, on
             </button>
             <button
               type="button"
-              onClick={() => onDownload(book)}
+              onClick={handleTogglePreview}
               className="rf-btn-primary"
             >
-              ⬇️ Download PDF
+              {showPreview ? 'Hide HTML Preview' : '👁️ Preview HTML'}
             </button>
           </div>
         </div>

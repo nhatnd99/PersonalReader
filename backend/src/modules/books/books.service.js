@@ -11,7 +11,7 @@ export class BooksService {
     const where = {
       userId,
       deletedAt: null,
-      status: { not: 'deleted' },
+      status: 'ready',
     }
 
     if (search && search.trim()) {
@@ -168,5 +168,50 @@ export class BooksService {
       fileName: book.originalFileName,
       expiresIn: 300,
     }
+  }
+
+  /**
+   * Return ordered structured HTML chunks for a book with pagination.
+   */
+  static async getBookContents({ bookId, userId, page = 1, limit = 10 }) {
+    await this.getBookById({ bookId, userId })
+
+    const safePage = Math.max(1, parseInt(page, 10) || 1)
+    const safeLimit = Math.min(50, Math.max(1, parseInt(limit, 10) || 10))
+    const skip = (safePage - 1) * safeLimit
+
+    const [total, contents] = await Promise.all([
+      prisma.bookContent.count({ where: { bookId } }),
+      prisma.bookContent.findMany({
+        where: { bookId },
+        orderBy: { sequence: 'asc' },
+        skip,
+        take: safeLimit,
+      }),
+    ])
+
+    return {
+      contents,
+      pagination: {
+        total,
+        page: safePage,
+        limit: safeLimit,
+        totalPages: Math.ceil(total / safeLimit) || 1,
+      },
+    }
+  }
+
+  /**
+   * Return detected chapters for a book ordered by sequence.
+   */
+  static async getBookChapters({ bookId, userId }) {
+    await this.getBookById({ bookId, userId })
+
+    const chapters = await prisma.bookChapter.findMany({
+      where: { bookId },
+      orderBy: { sequence: 'asc' },
+    })
+
+    return { chapters }
   }
 }

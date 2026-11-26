@@ -1,9 +1,14 @@
 import React, { useState } from 'react'
 import { formatBytes, formatDate } from '../utils/formatters.js'
 
-export default function BookCard({ book, onSelect, onDownload, onEdit, onDelete }) {
+export default function BookCard({ book, onSelect, onEdit, onDelete }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const file = book.files?.[0]
+  const metaSummary = book.totalPages
+    ? `${book.totalPages}p • ${(book.totalWords || 0).toLocaleString()}w`
+    : file
+    ? formatBytes(file.fileSize)
+    : '—'
 
   return (
     <div
@@ -99,26 +104,7 @@ export default function BookCard({ book, onSelect, onDownload, onEdit, onDelete 
                       color: '#334155',
                     }}
                   >
-                    👁️ Details
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMenuOpen(false)
-                      onDownload(book)
-                    }}
-                    style={{
-                      width: '100%',
-                      padding: '0.65rem 1rem',
-                      textAlign: 'left',
-                      background: 'none',
-                      border: 'none',
-                      fontSize: '0.85rem',
-                      cursor: 'pointer',
-                      color: '#334155',
-                    }}
-                  >
-                    ⬇️ Download
+                    👁️ Details & Preview
                   </button>
                   <button
                     type="button"
@@ -198,7 +184,7 @@ export default function BookCard({ book, onSelect, onDownload, onEdit, onDelete 
           color: '#94a3b8',
         }}
       >
-        <span>{file ? formatBytes(file.fileSize) : '—'}</span>
+        <span>{metaSummary}</span>
         <span>{formatDate(book.createdAt)}</span>
       </div>
     </div>

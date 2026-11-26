@@ -1,8 +1,13 @@
 import React from 'react'
 import { formatBytes, formatDate } from '../utils/formatters.js'
 
-export default function BookListItem({ book, onSelect, onDownload, onEdit, onDelete }) {
+export default function BookListItem({ book, onSelect, onEdit, onDelete }) {
   const file = book.files?.[0]
+  const metaSummary = book.totalPages
+    ? `${book.totalPages} pages • ${(book.totalWords || 0).toLocaleString()} words`
+    : file
+    ? formatBytes(file.fileSize)
+    : '—'
 
   return (
     <div
@@ -42,7 +47,7 @@ export default function BookListItem({ book, onSelect, onDownload, onEdit, onDel
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem', fontSize: '0.78rem', color: '#64748b', marginTop: '0.2rem' }}>
             <span>{book.author || 'Unknown Author'}</span>
             <span>•</span>
-            <span>{file ? formatBytes(file.fileSize) : '—'}</span>
+            <span>{metaSummary}</span>
             <span>•</span>
             <span>{formatDate(book.createdAt)}</span>
           </div>
@@ -53,11 +58,11 @@ export default function BookListItem({ book, onSelect, onDownload, onEdit, onDel
         <button
           type="button"
           className="rf-icon-btn"
-          onClick={() => onDownload(book)}
-          title="Download original PDF"
-          aria-label={`Download ${book.title}`}
+          onClick={() => onSelect && onSelect(book)}
+          title="View details & HTML preview"
+          aria-label={`View ${book.title}`}
         >
-          ⬇️
+          👁️
         </button>
         <button
           type="button"

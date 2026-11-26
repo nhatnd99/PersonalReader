@@ -1,8 +1,8 @@
 import React, { useState, useRef } from 'react'
-import { UploadService } from '../services/upload.service.js'
+import { BooksService } from '../services/books.service.js'
 import { formatBytes, cleanFileNameToTitle } from '../utils/formatters.js'
 
-const MAX_FILE_SIZE_BYTES = 52428800 // 50MB
+const MAX_FILE_SIZE_BYTES = 10485760 // 10MB default for in-memory processing
 
 export default function BookUploadModal({ isOpen, onClose, onMinimize, onUploadSuccess, onQueueChange }) {
   const [queue, setQueue] = useState([])
@@ -35,7 +35,7 @@ export default function BookUploadModal({ isOpen, onClose, onMinimize, onUploadS
         return
       }
       if (file.size <= 0 || file.size > MAX_FILE_SIZE_BYTES) {
-        rejected.push(`${file.name}: Size (${formatBytes(file.size)}) must be between 1 B and 50 MB`)
+        rejected.push(`${file.name}: Size (${formatBytes(file.size)}) must be between 1 B and 10 MB`)
         return
       }
       newItems.push({
@@ -43,10 +43,11 @@ export default function BookUploadModal({ isOpen, onClose, onMinimize, onUploadS
         file,
         title: cleanFileNameToTitle(file.name),
         author: '',
-        status: 'queued', // queued | initiating | uploading | verifying | success | error | cancelled
-        progress: 0,
+        status: 'queued', // queued | uploading | processing | success | needs_ocr | error | cancelled
+        uploadProgress: 0,
+        processingStep: '',
         error: '',
-        uploadId: null,
+        jobId: null,
       })
     })
 
@@ -59,7 +60,7 @@ export default function BookUploadModal({ isOpen, onClose, onMinimize, onUploadS
     }
   }
 
-  const uploadSingleItem = async (item) => {
+  const importSingleItem = async (item) => {
     if (!item.title.trim()) {
       updateItem(item.id, { status: 'error', error: 'Title cannot be empty.' })
       return
@@ -68,43 +69,77 @@ export default function BookUploadModal({ isOpen, onClose, onMinimize, onUploadS
     const controller = new AbortController()
     abortControllersRef.current[item.id] = controller
 
-    updateItem(item.id, { status: 'initiating', progress: 5, error: '' })
+    updateItem(item.id, {
+      status: 'uploading',
+      uploadProgress: 0,
+      processingStep: 'Uploading PDF to server memory…',
+      error: '',
+    })
 
     try {
-      const sessionData = await UploadService.initiate({
-        fileName: item.file.name,
-        fileSize: item.file.size,
-        mimeType: item.file.type || 'application/pdf',
+      const result = await BooksService.importBook({
+        file: item.file,
         title: item.title.trim(),
         author: item.author.trim() || undefined,
+        signal: controller.signal,
+        onUploadProgress: (percent) => {
+          if (percent < 100) {
+            updateItem(item.id, {
+              status: 'uploading',
+              uploadProgress: percent,
+              processingStep: `Uploading PDF (${percent}%)…`,
+            })
+          } else {
+            updateItem(item.id, {
+              status: 'processing',
+              uploadProgress: 100,
+              processingStep: 'Extracting text & converting to structured HTML…',
+            })
+          }
+        },
       })
 
-      updateItem(item.id, { uploadId: sessionData.uploadId, status: 'uploading', progress: 10 })
+      if (result.job?.status === 'PROCESSING' && result.job?.id) {
+        // Async polling fallback if server is running in async mode
+        updateItem(item.id, { jobId: result.job.id, status: 'processing', processingStep: result.job.currentStep || 'Processing…' })
+        let attempts = 0
+        while (attempts < 60) {
+          await new Promise((r) => setTimeout(r, 1500))
+          const job = await BooksService.getImportJob(result.job.id)
+          if (job.status === 'COMPLETED') {
+            updateItem(item.id, { status: 'success', uploadProgress: 100, processingStep: 'Completed' })
+            if (onUploadSuccess) onUploadSuccess(job.book || result.book)
+            return
+          }
+          if (job.status === 'NEEDS_OCR') {
+            updateItem(item.id, { status: 'needs_ocr', error: job.errorMessage || 'Scanned PDF requires OCR.' })
+            return
+          }
+          if (job.status === 'FAILED' || job.status === 'CANCELLED') {
+            updateItem(item.id, { status: 'error', error: job.errorMessage || 'Processing failed.' })
+            return
+          }
+          updateItem(item.id, { processingStep: job.currentStep || 'Processing…' })
+          attempts++
+        }
+      }
 
-      await UploadService.uploadToR2(
-        sessionData.uploadUrl,
-        item.file,
-        (percent) => {
-          updateItem(item.id, { progress: Math.min(90, Math.max(10, percent)) })
-        },
-        controller.signal
-      )
-
-      updateItem(item.id, { status: 'verifying', progress: 95 })
-      const completeResult = await UploadService.complete(sessionData.uploadId)
-
-      updateItem(item.id, { status: 'success', progress: 100 })
-      if (onUploadSuccess) onUploadSuccess(completeResult.book)
+      updateItem(item.id, { status: 'success', uploadProgress: 100, processingStep: 'Completed' })
+      if (onUploadSuccess) onUploadSuccess(result.book)
     } catch (err) {
       if (err.name === 'CanceledError' || err.name === 'AbortError') {
-        updateItem(item.id, { status: 'cancelled', progress: 0 })
+        updateItem(item.id, { status: 'cancelled', uploadProgress: 0, processingStep: '' })
         return
       }
+      const code = err.response?.data?.code
       const msg =
         err.response?.data?.error ||
         err.message ||
-        'Upload failed. Check your connection and retry.'
-      updateItem(item.id, { status: 'error', error: msg })
+        'Failed to import PDF. Please re-upload the original file.'
+      updateItem(item.id, {
+        status: code === 'NEEDS_OCR' ? 'needs_ocr' : 'error',
+        error: msg,
+      })
     } finally {
       delete abortControllersRef.current[item.id]
     }
@@ -115,18 +150,22 @@ export default function BookUploadModal({ isOpen, onClose, onMinimize, onUploadS
     const pendingItems = queue.filter((i) => i.status === 'queued')
     if (pendingItems.length === 0) return
 
-    // Upload concurrently (max 2-3 files smoothly)
-    await Promise.all(pendingItems.map((item) => uploadSingleItem(item)))
+    // Process sequentially or in small batches to respect server memory limits
+    for (const item of pendingItems) {
+      await importSingleItem(item)
+    }
   }
 
   const handleCancelItem = async (item) => {
     if (abortControllersRef.current[item.id]) {
       abortControllersRef.current[item.id].abort()
     }
-    if (item.uploadId) {
-      await UploadService.cancel(item.uploadId)
+    if (item.jobId) {
+      try {
+        await BooksService.cancelImportJob(item.jobId)
+      } catch (_) {}
     }
-    updateItem(item.id, { status: 'cancelled', progress: 0 })
+    updateItem(item.id, { status: 'cancelled', uploadProgress: 0, processingStep: '' })
   }
 
   const handleRemoveItem = (itemId) => {
@@ -139,7 +178,7 @@ export default function BookUploadModal({ isOpen, onClose, onMinimize, onUploadS
 
   if (!isOpen) return null
 
-  const activeCount = queue.filter((i) => ['initiating', 'uploading', 'verifying'].includes(i.status)).length
+  const activeCount = queue.filter((i) => ['uploading', 'processing'].includes(i.status)).length
   const queuedCount = queue.filter((i) => i.status === 'queued').length
 
   return (
@@ -155,7 +194,7 @@ export default function BookUploadModal({ isOpen, onClose, onMinimize, onUploadS
       <div className="rf-modal-card" role="dialog" aria-modal="true" aria-labelledby="upload-modal-title">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
           <h2 id="upload-modal-title" style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0, color: '#0f172a' }}>
-            Upload PDF Books
+            Import PDF Books
           </h2>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             {activeCount > 0 && onMinimize && (
@@ -179,7 +218,7 @@ export default function BookUploadModal({ isOpen, onClose, onMinimize, onUploadS
             <button
               type="button"
               onClick={activeCount > 0 && onMinimize ? onMinimize : onClose}
-              aria-label="Close upload dialog"
+              aria-label="Close import dialog"
               style={{
                 background: 'none',
                 border: 'none',
@@ -193,6 +232,10 @@ export default function BookUploadModal({ isOpen, onClose, onMinimize, onUploadS
             </button>
           </div>
         </div>
+
+        <p style={{ margin: '0 0 1rem 0', fontSize: '0.82rem', color: '#475569' }}>
+          PDFs are processed directly in memory and converted into responsive HTML for reading. Original PDF files are never stored.
+        </p>
 
         {validationError && (
           <div
@@ -252,7 +295,7 @@ export default function BookUploadModal({ isOpen, onClose, onMinimize, onUploadS
             {queue.length > 0 ? 'Add more PDF files' : 'Tap to choose or drag & drop PDFs'}
           </p>
           <p style={{ margin: 0, fontSize: '0.78rem', color: '#64748b' }}>
-            Multiple PDFs supported • Max 50 MB per file
+            Text-based PDFs up to 10 MB per file
           </p>
         </div>
 
@@ -261,7 +304,7 @@ export default function BookUploadModal({ isOpen, onClose, onMinimize, onUploadS
           <form onSubmit={handleStartAll}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.25rem', maxHeight: '42dvh', overflowY: 'auto' }}>
               {queue.map((item) => {
-                const isItemBusy = ['initiating', 'uploading', 'verifying'].includes(item.status)
+                const isItemBusy = ['uploading', 'processing'].includes(item.status)
                 return (
                   <div
                     key={item.id}
@@ -315,7 +358,7 @@ export default function BookUploadModal({ isOpen, onClose, onMinimize, onUploadS
                       {(item.status === 'error' || item.status === 'cancelled') && (
                         <button
                           type="button"
-                          onClick={() => uploadSingleItem(item)}
+                          onClick={() => importSingleItem(item)}
                           style={{
                             padding: '0.25rem 0.65rem',
                             borderRadius: '6px',
@@ -333,7 +376,13 @@ export default function BookUploadModal({ isOpen, onClose, onMinimize, onUploadS
 
                       {item.status === 'success' && (
                         <span style={{ fontSize: '0.78rem', fontWeight: 600, color: '#16a34a' }}>
-                          ✓ Uploaded
+                          ✓ Ready
+                        </span>
+                      )}
+
+                      {item.status === 'needs_ocr' && (
+                        <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#b45309' }}>
+                          ⚠️ Needs OCR
                         </span>
                       )}
                     </div>
@@ -371,19 +420,15 @@ export default function BookUploadModal({ isOpen, onClose, onMinimize, onUploadS
                     {isItemBusy && (
                       <div style={{ marginTop: '0.4rem' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#475569', marginBottom: '0.25rem' }}>
-                          <span>
-                            {item.status === 'initiating' && 'Creating secure session…'}
-                            {item.status === 'uploading' && 'Uploading to Cloudflare R2…'}
-                            {item.status === 'verifying' && 'Verifying PDF integrity…'}
-                          </span>
-                          <span>{item.progress}%</span>
+                          <span>{item.processingStep}</span>
+                          <span>{item.status === 'uploading' ? `${item.uploadProgress}%` : 'Processing…'}</span>
                         </div>
                         <div style={{ width: '100%', height: '6px', backgroundColor: '#e2e8f0', borderRadius: '9999px', overflow: 'hidden' }}>
                           <div
                             style={{
                               height: '100%',
-                              width: `${item.progress}%`,
-                              backgroundColor: '#2563eb',
+                              width: `${item.status === 'processing' ? 100 : item.uploadProgress}%`,
+                              backgroundColor: item.status === 'processing' ? '#0ea5e9' : '#2563eb',
                               transition: 'width 0.2s ease',
                             }}
                           />
@@ -391,8 +436,8 @@ export default function BookUploadModal({ isOpen, onClose, onMinimize, onUploadS
                       </div>
                     )}
 
-                    {item.status === 'error' && item.error && (
-                      <div style={{ marginTop: '0.35rem', fontSize: '0.76rem', color: '#dc2626' }}>
+                    {(item.status === 'error' || item.status === 'needs_ocr') && item.error && (
+                      <div style={{ marginTop: '0.35rem', fontSize: '0.76rem', color: item.status === 'needs_ocr' ? '#b45309' : '#dc2626' }}>
                         {item.error}
                       </div>
                     )}
@@ -440,7 +485,7 @@ export default function BookUploadModal({ isOpen, onClose, onMinimize, onUploadS
                   disabled={queuedCount === 0}
                   className="rf-btn-primary"
                 >
-                  {queuedCount > 1 ? `Upload ${queuedCount} Books` : 'Start Upload'}
+                  {queuedCount > 1 ? `Import ${queuedCount} Books` : 'Start Import'}
                 </button>
               </div>
             </div>

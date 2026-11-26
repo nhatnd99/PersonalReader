@@ -1,19 +1,19 @@
-# Phase 2 – Book Library & Cloudflare R2 Integration
+# Phase 2 – In-Memory PDF Processing & Structured HTML Storage
 
-## 1. Overview
-Phase 2 delivers a personal digital book library and direct-to-object-storage PDF upload architecture built on:
-- **Frontend**: React 18 + Vite + JavaScript + Responsive CSS + Vite PWA
-- **Backend**: Node.js + Express.js + AWS SDK v3 (`@aws-sdk/client-s3`, `@aws-sdk/s3-request-presigner`)
-- **Database**: Neon PostgreSQL + Prisma ORM
-- **File Storage**: Cloudflare R2 (private bucket, zero egress fees)
+## 1. Summary
+Phase 2 converts uploaded PDFs **directly in server memory** into **sanitized, structured HTML chunks** stored in Neon PostgreSQL, eliminating external object storage (R2/S3) and local disk writes.
 
-## 2. Architecture & Design Adjustments
-- **CSS Architecture**: The existing frontend uses clean CSS variables (`global.css`, `auth.css`) without a Tailwind dependency. Responsive styling (`library.css`) was implemented using standard CSS breakpoints (480px, 768px, 1024px) and `env(safe-area-inset-*)` to preserve zero unnecessary dependencies.
-- **API Prefix Convention**: Existing Phase 1 endpoints use `/api/v1/auth` and `/api/v1/health`. Phase 2 preserves this convention with `/api/v1/uploads/*` and `/api/v1/books/*`, while supporting `/api/v1/books/:bookId/file-url` as an alias for `/download-url`.
+## 2. Core Pipeline
+`PDF Upload (multipart/form-data)` → `Multer MemoryStorage` → `PDF.js In-Memory Extraction (Uint8Array)` → `Semantic HTML Transformation` → `HTML Sanitization` → `Batched Neon PostgreSQL Persistence` → `Memory & PDF.js Cleanup`.
 
-## 3. Implemented Capabilities
-- **Direct-to-R2 Pre-signed Upload**: Browser uploads PDF bytes directly to Cloudflare R2; Vercel Serverless Functions never buffer file bytes.
-- **Multi-file Upload Queue**: Users can select or drag-and-drop multiple PDFs, track independent progress bars, cancel/retry individual files, and minimize the dialog so the library remains non-blocking.
-- **Server-Side Verification**: `complete` verifies object presence via `HeadObjectCommand`, checks file size, and validates `%PDF-` magic bytes via a `bytes=0-7` range request.
-- **Responsive Library UI**: Grid & List views, debounced search, sorting (`newest`, `oldest`, `updated`, `title`), loading skeletons, pagination, Book Details modal (with Phase 3 Reader placeholder), Edit modal (including `language`), and Delete confirmation.
-- **PWA Safety**: Added missing `icon-192.png`, `icon-512.png`, `apple-touch-icon.png`, and `favicon.ico`. Workbox caches only the static app shell and excludes `/api/` and private R2 URLs.
+## 3. Implemented Components
+- **Backend**:
+  - `backend/src/services/pdf/pdfExtractor.js`: Page-by-page PDF.js extraction, `%PDF-` signature validation, password/corrupt/scanned (`NEEDS_OCR`) detection, guaranteed `destroy()`.
+  - `backend/src/services/pdf/htmlTransformer.js`: Font-size & position heuristics for `h1`/`h2`/`h3`, `ul`/`ol`, `p`, header/footer removal, ordered chunking (~800 words), chapter detection.
+  - `backend/src/services/pdf/htmlSanitizer.js`: Deterministic allowlist sanitizer (`section`, `h1`-`h3`, `p`, `ul`, `ol`, `li`, `blockquote`, `strong`, `em`), zero attributes/scripts.
+  - `backend/src/modules/books/bookImport.service.js`: Concurrency cap, timeout, batched DB writes, job lifecycle (`PENDING` → `PROCESSING` → `COMPLETED` / `FAILED` / `NEEDS_OCR` / `CANCELLED`).
+- **Frontend**:
+  - `BookUploadModal.jsx`: Multi-file drag-and-drop / mobile picker, upload vs. processing progress indicators, `NEEDS_OCR` handling, cancel & retry, non-blocking minimize pill.
+  - `BookDetailsModal.jsx`: Displays pages, word count, language, detected chapters, and live sanitized HTML preview.
+- **PWA & Responsive**:
+  - Icons generated in `frontend/public/icons/`, Workbox excludes `/api/` from precache fallback, responsive breakpoints in `library.css`.
