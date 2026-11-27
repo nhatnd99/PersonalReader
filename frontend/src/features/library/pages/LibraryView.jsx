@@ -139,6 +139,19 @@ export default function LibraryView() {
         </button>
       )}
 
+      {/* Library Summary Header */}
+      <div className="rf-library-header">
+        <div>
+          <span className="rf-library-count">
+            {isLoading
+              ? 'Loading books…'
+              : typeof pagination?.total === 'number'
+              ? `${pagination.total} ${pagination.total === 1 ? 'book' : 'books'} in your library`
+              : ''}
+          </span>
+        </div>
+      </div>
+
       {/* Action Toolbar */}
       <div className="rf-toolbar">
         <div className="rf-toolbar-left">
@@ -195,7 +208,7 @@ export default function LibraryView() {
             onClick={() => setIsUploadOpen(true)}
           >
             <span>+</span>
-            <span>Upload PDF</span>
+            <span>Upload Book</span>
           </button>
         </div>
       </div>
@@ -266,12 +279,12 @@ export default function LibraryView() {
         >
           <span style={{ fontSize: '3rem', display: 'block', marginBottom: '0.75rem' }}>📚</span>
           <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#0f172a', margin: '0 0 0.5rem 0' }}>
-            {debouncedSearch ? 'No books match your search' : 'Your personal library is empty'}
+            {debouncedSearch ? 'No books match your search' : 'Your library is empty.'}
           </h3>
           <p style={{ color: '#64748b', fontSize: '0.9rem', margin: '0 auto 1.25rem', maxWidth: '400px' }}>
             {debouncedSearch
               ? 'Try searching with another keyword or clear the search filter.'
-              : 'Import your favorite English PDF books to convert them into clean, responsive HTML for reading.'}
+              : 'Upload your first PDF to start reading.'}
           </p>
           {!debouncedSearch && (
             <button
@@ -279,7 +292,7 @@ export default function LibraryView() {
               className="rf-btn-primary"
               onClick={() => setIsUploadOpen(true)}
             >
-              Upload Your First Book
+              Upload a Book
             </button>
           )}
         </div>

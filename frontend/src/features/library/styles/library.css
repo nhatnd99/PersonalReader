@@ -1,18 +1,165 @@
-/* ReadFlow Book Library – Responsive Styles (PC + Mobile + PWA) */
+/* ReadFlow Book Library & Authenticated App Shell – Responsive Styles */
 
-.rf-app-shell {
+.rf-shell {
   min-height: 100vh;
   min-height: 100dvh;
+  display: flex;
   background-color: #f8fafc;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   padding-bottom: env(safe-area-inset-bottom, 0px);
   overflow-x: hidden;
 }
 
+/* Sidebar */
+.rf-sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 248px;
+  background-color: #ffffff;
+  border-right: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  z-index: 200;
+  transform: translateX(-100%);
+  transition: transform 0.22s ease;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.rf-sidebar.open {
+  transform: translateX(0);
+}
+
+.rf-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.45);
+  z-index: 190;
+}
+
+.rf-sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 1.1rem 1.15rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.rf-brand-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.rf-brand-subtitle {
+  font-size: 0.72rem;
+  color: #64748b;
+}
+
+.rf-drawer-close {
+  margin-left: auto;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #64748b;
+  cursor: pointer;
+  min-width: 36px;
+  min-height: 36px;
+}
+
+.rf-nav {
+  flex: 1;
+  padding: 0.85rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.rf-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 8px;
+  color: #475569;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+  min-height: 44px;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.rf-nav-link:hover {
+  background-color: #f1f5f9;
+  color: #0f172a;
+  text-decoration: none;
+}
+
+.rf-nav-link.active {
+  background-color: #eff6ff;
+  color: #1d4ed8;
+}
+
+.rf-nav-icon {
+  font-size: 1.05rem;
+  width: 22px;
+  text-align: center;
+}
+
+.rf-nav-badge {
+  margin-left: auto;
+  font-size: 0.68rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 9999px;
+  background-color: #f1f5f9;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.rf-sidebar-footer {
+  padding: 0.85rem 1rem;
+  border-top: 1px solid #f1f5f9;
+}
+
+.rf-sidebar-user {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.rf-sidebar-username {
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rf-sidebar-email {
+  font-size: 0.74rem;
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Content Wrapper & Header */
+.rf-content-wrapper {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
 .rf-header {
   background-color: #ffffff;
   border-bottom: 1px solid #e2e8f0;
-  padding: calc(0.75rem + env(safe-area-inset-top, 0px)) 1rem 0.75rem;
+  padding: calc(0.65rem + env(safe-area-inset-top, 0px)) 1rem 0.65rem;
   position: sticky;
   top: 0;
   z-index: 100;
@@ -27,50 +174,63 @@
   gap: 0.75rem;
 }
 
-.rf-brand {
-  display: flex;
+.rf-menu-btn {
+  min-width: 42px;
+  min-height: 42px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background-color: #ffffff;
+  color: #334155;
+  font-size: 1.15rem;
+  display: inline-flex;
   align-items: center;
-  gap: 0.65rem;
-  min-width: 0;
+  justify-content: center;
+  cursor: pointer;
 }
 
-.rf-brand-title {
-  font-size: 1.25rem;
-  font-weight: 800;
-  margin: 0;
+.rf-header-title {
+  font-size: 1.15rem;
+  font-weight: 700;
   color: #0f172a;
-  letter-spacing: -0.02em;
-}
-
-.rf-brand-subtitle {
-  font-size: 0.75rem;
-  color: #64748b;
-  display: block;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .rf-user-actions {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.5rem;
   flex-shrink: 0;
 }
 
-.rf-user-badge {
-  display: flex;
+.rf-user-menu-trigger {
+  display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 0.85rem;
-  color: #475569;
+  padding: 0.25rem 0.5rem;
+  border-radius: 9999px;
+  border: 1px solid #e2e8f0;
+  background-color: #ffffff;
+  cursor: pointer;
+  min-height: 40px;
+}
+
+.rf-user-menu-trigger:hover {
+  background-color: #f8fafc;
 }
 
 .rf-user-name {
   font-weight: 600;
+  font-size: 0.85rem;
+  color: #334155;
   display: none;
 }
 
 .rf-avatar {
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   background-color: #dbeafe;
   color: #1d4ed8;
@@ -78,33 +238,67 @@
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 0.85rem;
-}
-
-.rf-btn-signout {
-  min-height: 38px;
-  padding: 0.45rem 0.85rem;
-  background: #ffffff;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  cursor: pointer;
   font-size: 0.82rem;
-  font-weight: 600;
-  color: #475569;
-  transition: background-color 0.15s ease;
+  flex-shrink: 0;
 }
 
-.rf-btn-signout:hover {
-  background-color: #f1f5f9;
+.rf-user-dropdown {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  width: 220px;
+  background-color: #ffffff;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.15);
+  z-index: 120;
+  overflow: hidden;
+}
+
+.rf-user-dropdown-info {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.rf-user-dropdown-logout {
+  width: 100%;
+  padding: 0.7rem 1rem;
+  text-align: left;
+  background: none;
+  border: none;
+  color: #dc2626;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.rf-user-dropdown-logout:hover {
+  background-color: #fef2f2;
 }
 
 .rf-main {
   max-width: 1200px;
+  width: 100%;
   margin: 0 auto;
   padding: 1.25rem 1rem 3rem;
 }
 
-/* Library Toolbar */
+/* Library Header & Toolbar */
+.rf-library-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.rf-library-count {
+  font-size: 0.85rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
 .rf-toolbar {
   display: flex;
   flex-direction: column;
@@ -214,7 +408,7 @@
   cursor: not-allowed;
 }
 
-/* Grid & List */
+/* Grid & Book Cover Cards */
 .rf-book-grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -225,7 +419,7 @@
   background-color: #ffffff;
   border-radius: 12px;
   border: 1px solid #e2e8f0;
-  padding: 1.15rem;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -237,8 +431,27 @@
 
 .rf-book-card:hover {
   border-color: #cbd5e1;
-  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
   transform: translateY(-2px);
+}
+
+.rf-book-cover {
+  height: 110px;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border-bottom: 1px solid #e2e8f0;
+  padding: 0.85rem 1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+}
+
+.rf-book-card-body {
+  padding: 1rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  justify-content: space-between;
 }
 
 .rf-book-list-item {
@@ -293,10 +506,10 @@
 .rf-badge {
   display: inline-flex;
   align-items: center;
-  padding: 0.15rem 0.5rem;
+  padding: 0.15rem 0.55rem;
   border-radius: 9999px;
-  font-size: 0.7rem;
-  font-weight: 600;
+  font-size: 0.68rem;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
@@ -322,7 +535,7 @@
   border-radius: 12px;
   border: 1px solid #e2e8f0;
   padding: 1.15rem;
-  height: 175px;
+  height: 220px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -379,7 +592,7 @@
   border: 1px solid #334155;
 }
 
-/* Responsive Breakpoints: 390px, 768px, 1024px, 1440px */
+/* Responsive Breakpoints: 480px, 768px, 1024px */
 @media (min-width: 480px) {
   .rf-book-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -388,10 +601,10 @@
 
 @media (min-width: 768px) {
   .rf-header {
-    padding: 0.875rem 1.5rem;
+    padding: 0.8rem 1.5rem;
   }
   .rf-main {
-    padding: 1.75rem 1.5rem 3.5rem;
+    padding: 1.5rem 1.5rem 3.5rem;
   }
   .rf-user-name {
     display: inline;
@@ -418,6 +631,24 @@
 }
 
 @media (min-width: 1024px) {
+  .rf-sidebar {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    transform: translateX(0);
+    flex-shrink: 0;
+  }
+  .rf-menu-btn,
+  .rf-drawer-close,
+  .rf-drawer-backdrop {
+    display: none;
+  }
+  .rf-book-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1320px) {
   .rf-book-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
