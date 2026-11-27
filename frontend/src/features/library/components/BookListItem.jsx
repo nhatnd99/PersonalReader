@@ -1,7 +1,9 @@
 import React from 'react'
+import { useNavigate } from 'react-router-dom'
 import { formatBytes, formatDate } from '../utils/formatters.js'
 
 export default function BookListItem({ book, onSelect, onEdit, onDelete }) {
+  const navigate = useNavigate()
   const file = book.files?.[0]
   const metaSummary = book.totalPages
     ? `${book.totalPages} pages • ${(book.totalWords || 0).toLocaleString()} words`
@@ -55,6 +57,15 @@ export default function BookListItem({ book, onSelect, onEdit, onDelete }) {
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0 }} onClick={(e) => e.stopPropagation()}>
+        <button
+          type="button"
+          className="rf-icon-btn"
+          onClick={() => navigate(`/reader/${book.id}`)}
+          title="Open Book in Reader"
+          aria-label={`Open ${book.title}`}
+        >
+          📖
+        </button>
         <button
           type="button"
           className="rf-icon-btn"

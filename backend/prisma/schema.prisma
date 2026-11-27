@@ -25,10 +25,12 @@ model User {
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
 
-  refreshTokens  RefreshToken[]
-  books          Book[]
-  uploadSessions UploadSession[]
-  importJobs     BookImportJob[]
+  refreshTokens     RefreshToken[]
+  books             Book[]
+  uploadSessions    UploadSession[]
+  importJobs        BookImportJob[]
+  readingProgress   ReadingProgress[]
+  readingPreference ReadingPreference?
 
   @@index([email])
   @@map("users")
@@ -66,16 +68,20 @@ model Book {
   pageCount        Int?      @map("page_count")
   totalPages       Int?      @map("total_pages")
   totalWords       Int?      @map("total_words")
+  contentVersion   Int       @default(1) @map("content_version")
+  tocVersion       Int       @default(1) @map("toc_version")
   createdAt        DateTime  @default(now()) @map("created_at")
   updatedAt        DateTime  @updatedAt @map("updated_at")
   deletedAt        DateTime? @map("deleted_at")
 
-  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  files          BookFile[]
-  uploadSessions UploadSession[]
-  contents       BookContent[]
-  chapters       BookChapter[]
-  importJobs     BookImportJob[]
+  user            User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  files           BookFile[]
+  uploadSessions  UploadSession[]
+  contents        BookContent[]
+  chapters        BookChapter[]
+  importJobs      BookImportJob[]
+  tocEntries      BookTableOfContents[]
+  readingProgress ReadingProgress[]
 
   @@index([userId])
   @@index([status])
@@ -184,4 +190,70 @@ model UploadSession {
   @@index([status])
   @@index([expiresAt])
   @@map("upload_sessions")
+}
+
+// ─── Book Table of Contents (Hybrid Auto + Manual Hierarchy) ─────────────────
+model BookTableOfContents {
+  id              String   @id @default(uuid()) @db.Uuid
+  bookId          String   @map("book_id") @db.Uuid
+  parentId        String?  @map("parent_id") @db.Uuid
+  title           String
+  anchorId        String   @map("anchor_id")
+  contentBlockId  String?  @map("content_block_id")
+  contentSequence Int      @default(1) @map("content_sequence")
+  level           Int      @default(1) // 1..4
+  position        Int      @default(0)
+  sourceType      String   @default("AUTO") @map("source_type") // "AUTO" | "MANUAL"
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  book            Book                  @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  parent          BookTableOfContents?  @relation("TocHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children        BookTableOfContents[] @relation("TocHierarchy")
+  readingProgress ReadingProgress[]
+
+  @@index([bookId, position])
+  @@index([bookId, parentId])
+  @@map("book_table_of_contents")
+}
+
+// ─── Reading Progress (Scroll + Logical Block & Sync Revision) ───────────────
+model ReadingProgress {
+  id                String   @id @default(uuid()) @db.Uuid
+  userId            String   @map("user_id") @db.Uuid
+  bookId            String   @map("book_id") @db.Uuid
+  currentTocEntryId String?  @map("current_toc_entry_id") @db.Uuid
+  currentBlockId    String?  @map("current_block_id")
+  currentSequence   Int      @default(1) @map("current_sequence")
+  scrollPercentage  Float    @default(0) @map("scroll_percentage")
+  readingPercentage Float    @default(0) @map("reading_percentage")
+  lastDeviceId      String?  @map("last_device_id")
+  revision          Int      @default(1)
+  lastReadAt        DateTime @default(now()) @map("last_read_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  user            User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  book            Book                 @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  currentTocEntry BookTableOfContents? @relation(fields: [currentTocEntryId], references: [id], onDelete: SetNull)
+
+  @@unique([userId, bookId])
+  @@index([userId])
+  @@index([bookId])
+  @@map("reading_progress")
+}
+
+// ─── Reading Preferences (Account-Level Reader Settings) ──────────────────────
+model ReadingPreference {
+  id           String   @id @default(uuid()) @db.Uuid
+  userId       String   @unique @map("user_id") @db.Uuid
+  fontSize     Int      @default(18) @map("font_size")
+  fontFamily   String   @default("serif") @map("font_family")
+  lineHeight   Float    @default(1.75) @map("line_height")
+  contentWidth Int      @default(720) @map("content_width")
+  theme        String   @default("light") // "light" | "dark" | "sepia"
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("reading_preferences")
 }

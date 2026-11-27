@@ -1,7 +1,9 @@
 import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { formatBytes, formatDate } from '../utils/formatters.js'
 
 export default function BookCard({ book, onSelect, onEdit, onDelete }) {
+  const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
   const file = book.files?.[0]
   const metaSummary = book.totalPages
@@ -75,6 +77,26 @@ export default function BookCard({ book, onSelect, onEdit, onDelete }) {
                     overflow: 'hidden',
                   }}
                 >
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMenuOpen(false)
+                      navigate(`/reader/${book.id}`)
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '0.65rem 1rem',
+                      textAlign: 'left',
+                      background: 'none',
+                      border: 'none',
+                      fontSize: '0.85rem',
+                      cursor: 'pointer',
+                      color: '#1d4ed8',
+                      fontWeight: 600,
+                    }}
+                  >
+                    📖 Open Book
+                  </button>
                   <button
                     type="button"
                     onClick={() => {

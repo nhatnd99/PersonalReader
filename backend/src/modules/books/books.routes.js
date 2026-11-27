@@ -3,6 +3,7 @@ import multer from 'multer'
 import { rateLimit } from 'express-rate-limit'
 import { authenticate } from '../../middleware/auth.js'
 import { BooksController } from './books.controller.js'
+import { ReaderController } from '../reader/reader.controller.js'
 
 const router = Router()
 
@@ -62,5 +63,17 @@ router.patch('/:bookId', BooksController.update)
 router.delete('/:bookId', BooksController.delete)
 router.get('/:bookId/download-url', fileUrlLimiter, BooksController.getDownloadUrl)
 router.get('/:bookId/file-url', fileUrlLimiter, BooksController.getDownloadUrl)
+
+// Phase 3: Reader, Table of Contents, Reading Progress & Sync State
+router.get('/:bookId/reader', ReaderController.getReaderBundle)
+router.get('/:bookId/toc', ReaderController.getToc)
+router.post('/:bookId/toc', ReaderController.createTocEntry)
+router.patch('/:bookId/toc/reorder', ReaderController.reorderToc)
+router.post('/:bookId/toc/reset', ReaderController.resetToc)
+router.patch('/:bookId/toc/:entryId', ReaderController.updateTocEntry)
+router.delete('/:bookId/toc/:entryId', ReaderController.deleteTocEntry)
+router.get('/:bookId/progress', ReaderController.getProgress)
+router.put('/:bookId/progress', ReaderController.upsertProgress)
+router.get('/:bookId/sync-state', ReaderController.getSyncState)
 
 export default router

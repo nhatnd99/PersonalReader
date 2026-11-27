@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { BooksService } from '../services/books.service.js'
 import { formatDate } from '../utils/formatters.js'
 
 export default function BookDetailsModal({ book, isOpen, onClose, onEdit, onDelete }) {
+  const navigate = useNavigate()
   const [chapters, setChapters] = useState([])
   const [previewChunk, setPreviewChunk] = useState(null)
   const [showPreview, setShowPreview] = useState(false)
@@ -177,7 +179,7 @@ export default function BookDetailsModal({ book, isOpen, onClose, onEdit, onDele
           </div>
         )}
 
-        {/* Phase 3 Reader Integration Placeholder */}
+        {/* Reflow Reader Launch Bar */}
         <div
           style={{
             padding: '0.75rem 1rem',
@@ -193,23 +195,19 @@ export default function BookDetailsModal({ book, isOpen, onClose, onEdit, onDele
           }}
         >
           <div style={{ fontSize: '0.82rem', color: '#1e40af' }}>
-            <strong>📖 Reflow Reader:</strong> Full reading experience & vocabulary lookup coming in Phase 3.
+            <strong>📖 Reflow Reader:</strong> Read structured HTML with Table of Contents & cross-device sync.
           </div>
           <button
             type="button"
-            disabled
-            style={{
-              padding: '0.45rem 0.85rem',
-              borderRadius: '6px',
-              border: '1px solid #93c5fd',
-              backgroundColor: '#dbeafe',
-              color: '#1e40af',
-              fontSize: '0.8rem',
-              fontWeight: 600,
-              cursor: 'not-allowed',
+            disabled={book.status !== 'ready'}
+            onClick={() => {
+              onClose()
+              navigate(`/reader/${book.id}`)
             }}
+            className="rf-btn-primary"
+            style={{ minHeight: '38px', padding: '0.45rem 0.95rem', fontSize: '0.82rem' }}
           >
-            Open Reader (Phase 3)
+            Open Book
           </button>
         </div>
 

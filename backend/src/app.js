@@ -14,6 +14,8 @@ import healthRouter from './modules/health/health.routes.js'
 import authRouter from './modules/auth/auth.routes.js'
 import uploadsRouter from './modules/uploads/uploads.routes.js'
 import booksRouter from './modules/books/books.routes.js'
+import usersRouter from './modules/users/users.routes.js'
+import syncRouter from './modules/sync/sync.routes.js'
 
 const app = express()
 
@@ -54,6 +56,8 @@ app.use('/api/v1/auth', authRouter)
 app.use('/api/v1/uploads', uploadsRouter)
 app.use('/api/v1/books', booksRouter)
 app.use('/api/books', booksRouter)
+app.use('/api/v1/users', usersRouter)
+app.use('/api/v1/sync', syncRouter)
 
 // 404 fallback
 app.use((_req, res) => {

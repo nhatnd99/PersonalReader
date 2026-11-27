@@ -1,0 +1,306 @@
+/* ReadFlow Reader – Themes, Typography & Responsive Layout */
+
+.rf-reader-shell {
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  --r-bg: #ffffff;
+  --r-surface: #f8fafc;
+  --r-text: #1e293b;
+  --r-muted: #64748b;
+  --r-border: #e2e8f0;
+  --r-accent: #2563eb;
+  --r-accent-bg: #eff6ff;
+  background-color: var(--r-bg);
+  color: var(--r-text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.rf-reader-shell.theme-dark {
+  --r-bg: #0f172a;
+  --r-surface: #1e293b;
+  --r-text: #e2e8f0;
+  --r-muted: #94a3b8;
+  --r-border: #334155;
+  --r-accent: #60a5fa;
+  --r-accent-bg: #1e3a5f;
+}
+
+.rf-reader-shell.theme-sepia {
+  --r-bg: #f4ecd8;
+  --r-surface: #ebe1c8;
+  --r-text: #3d2e1e;
+  --r-muted: #78624a;
+  --r-border: #d9cbb0;
+  --r-accent: #9a5b13;
+  --r-accent-bg: #e6d7b9;
+}
+
+/* Header */
+.rf-reader-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: calc(0.5rem + env(safe-area-inset-top, 0px)) 0.75rem 0.5rem;
+  background-color: var(--r-surface);
+  border-bottom: 1px solid var(--r-border);
+  flex-shrink: 0;
+  z-index: 40;
+}
+
+.rf-reader-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.rf-reader-book-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin: 0;
+}
+
+.rf-reader-header-right {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.rf-reader-btn {
+  min-height: 38px;
+  padding: 0.35rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid var(--r-border);
+  background-color: var(--r-bg);
+  color: var(--r-text);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.rf-reader-btn:hover {
+  border-color: var(--r-accent);
+}
+
+.rf-reader-btn.active {
+  background-color: var(--r-accent-bg);
+  color: var(--r-accent);
+  border-color: var(--r-accent);
+}
+
+.rf-progress-pill {
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.25rem 0.55rem;
+  border-radius: 9999px;
+  background-color: var(--r-accent-bg);
+  color: var(--r-accent);
+}
+
+/* Body Layout */
+.rf-reader-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  position: relative;
+}
+
+/* TOC Sidebar / Drawer */
+.rf-toc-sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 290px;
+  max-width: 85vw;
+  background-color: var(--r-surface);
+  border-right: 1px solid var(--r-border);
+  display: flex;
+  flex-direction: column;
+  z-index: 60;
+  transform: translateX(-100%);
+  transition: transform 0.2s ease;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.rf-toc-sidebar.open {
+  transform: translateX(0);
+}
+
+.rf-toc-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 55;
+}
+
+.rf-toc-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.5rem;
+}
+
+.rf-toc-item-row {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.55rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: var(--r-text);
+  margin-bottom: 2px;
+}
+
+.rf-toc-item-row:hover {
+  background-color: var(--r-bg);
+}
+
+.rf-toc-item-row.active {
+  background-color: var(--r-accent-bg);
+  color: var(--r-accent);
+  font-weight: 700;
+}
+
+/* Main Scrollable Reading Area */
+.rf-reader-scroll {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 1.5rem 1rem 4rem;
+  scroll-behavior: smooth;
+}
+
+.rf-reader-prose {
+  margin: 0 auto;
+  max-width: var(--reader-width, 720px);
+  font-size: var(--reader-font-size, 18px);
+  line-height: var(--reader-line-height, 1.75);
+  font-family: var(--reader-font-family, Georgia, Cambria, 'Times New Roman', serif);
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.rf-reader-prose h1 {
+  font-size: 1.65em;
+  line-height: 1.25;
+  margin: 1.5em 0 0.65em;
+  font-weight: 800;
+}
+
+.rf-reader-prose h2 {
+  font-size: 1.35em;
+  line-height: 1.3;
+  margin: 1.35em 0 0.55em;
+  font-weight: 700;
+}
+
+.rf-reader-prose h3,
+.rf-reader-prose h4 {
+  font-size: 1.12em;
+  line-height: 1.35;
+  margin: 1.1em 0 0.45em;
+  font-weight: 700;
+}
+
+.rf-reader-prose p {
+  margin: 0 0 1em;
+}
+
+.rf-reader-prose ul,
+.rf-reader-prose ol {
+  margin: 0 0 1em;
+  padding-left: 1.5em;
+}
+
+.rf-reader-prose li {
+  margin-bottom: 0.35em;
+}
+
+.rf-reader-prose blockquote {
+  margin: 1em 0;
+  padding: 0.6em 1em;
+  border-left: 3px solid var(--r-accent);
+  background-color: var(--r-surface);
+  border-radius: 0 6px 6px 0;
+}
+
+.rf-reader-prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1em 0;
+  display: block;
+  overflow-x: auto;
+}
+
+.rf-reader-prose th,
+.rf-reader-prose td {
+  border: 1px solid var(--r-border);
+  padding: 0.5rem 0.65rem;
+  text-align: left;
+}
+
+/* Settings Panel */
+.rf-settings-panel {
+  position: fixed;
+  top: 56px;
+  right: 0.75rem;
+  width: 310px;
+  max-width: calc(100vw - 1.5rem);
+  background-color: var(--r-surface);
+  border: 1px solid var(--r-border);
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
+  z-index: 70;
+}
+
+/* Remote Sync Banner (non-interrupting) */
+.rf-remote-banner {
+  position: fixed;
+  bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #0f172a;
+  color: #ffffff;
+  padding: 0.6rem 1rem;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  font-size: 0.82rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+  z-index: 80;
+  max-width: calc(100vw - 2rem);
+}
+
+/* Desktop Sidebar (>= 1024px) */
+@media (min-width: 1024px) {
+  .rf-reader-header {
+    padding: 0.55rem 1.25rem;
+  }
+  .rf-toc-sidebar.open {
+    position: static;
+    transform: none;
+    flex-shrink: 0;
+  }
+  .rf-toc-backdrop {
+    display: none;
+  }
+  .rf-reader-scroll {
+    padding: 2rem 2rem 5rem;
+  }
+}

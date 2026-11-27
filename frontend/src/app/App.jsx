@@ -10,6 +10,7 @@ const HomePage = lazy(() => import('../features/auth/pages/HomePage.jsx'))
 const LoginPage = lazy(() => import('../features/auth/pages/LoginPage.jsx'))
 const RegisterPage = lazy(() => import('../features/auth/pages/RegisterPage.jsx'))
 const ComingSoonPage = lazy(() => import('../features/library/pages/ComingSoonPage.jsx'))
+const ReaderPage = lazy(() => import('../features/reader/pages/ReaderPage.jsx'))
 const NotFoundPage = lazy(() => import('./NotFoundPage.jsx'))
 
 export default function App() {
@@ -81,6 +82,14 @@ export default function App() {
                     showProfile
                   />
                 </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/reader/:bookId"
+            element={
+              <ProtectedRoute>
+                <ReaderPage />
               </ProtectedRoute>
             }
           />
