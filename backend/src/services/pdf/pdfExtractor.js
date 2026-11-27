@@ -4,6 +4,13 @@
  * Always destroys PDF.js document instances to release memory.
  */
 import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs'
+import * as pdfjsWorker from 'pdfjs-dist/legacy/build/pdf.worker.mjs'
+
+// Bind statically imported worker to globalThis so serverless bundlers (Vercel NFT)
+// include pdf.worker.mjs and pdfjs-dist runs without dynamic worker path resolution.
+if (!globalThis.pdfjsWorker) {
+  globalThis.pdfjsWorker = pdfjsWorker
+}
 
 const MAX_PDF_PAGES = parseInt(process.env.MAX_PDF_PAGES || '500', 10)
 const MIN_TOTAL_CHARS_THRESHOLD = 40
