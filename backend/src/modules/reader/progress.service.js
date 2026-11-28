@@ -123,6 +123,7 @@ export class ProgressService {
       bookId: book.id,
       contentVersion: book.contentVersion,
       tocVersion: book.tocVersion,
+      annotationsVersion: book.annotationsVersion,
       progress: progress || null,
       serverTime: new Date().toISOString(),
     }

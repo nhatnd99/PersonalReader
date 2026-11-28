@@ -11,6 +11,7 @@ const LoginPage = lazy(() => import('../features/auth/pages/LoginPage.jsx'))
 const RegisterPage = lazy(() => import('../features/auth/pages/RegisterPage.jsx'))
 const ComingSoonPage = lazy(() => import('../features/library/pages/ComingSoonPage.jsx'))
 const ReaderPage = lazy(() => import('../features/reader/pages/ReaderPage.jsx'))
+const VocabularyPage = lazy(() => import('../features/vocabulary/pages/VocabularyPage.jsx'))
 const NotFoundPage = lazy(() => import('./NotFoundPage.jsx'))
 
 export default function App() {
@@ -61,11 +62,7 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <AppLayout>
-                  <ComingSoonPage
-                    title="Vocabulary"
-                    icon="📝"
-                    description="Contextual English-to-Vietnamese word lookup and personal vocabulary lists are coming in Phase 4."
-                  />
+                  <VocabularyPage />
                 </AppLayout>
               </ProtectedRoute>
             }

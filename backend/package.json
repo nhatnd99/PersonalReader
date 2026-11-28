@@ -12,7 +12,7 @@
     "db:migrate": "prisma migrate dev",
     "db:migrate:deploy": "prisma migrate deploy",
     "db:studio": "prisma studio",
-    "test": "node --env-file-if-exists=.env.local --test tests/**/*.test.js"
+    "test": "node --env-file-if-exists=.env.local --test --test-concurrency=1 tests/**/*.test.js"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.600.0",

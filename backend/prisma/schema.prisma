@@ -31,6 +31,10 @@ model User {
   importJobs        BookImportJob[]
   readingProgress   ReadingProgress[]
   readingPreference ReadingPreference?
+  highlights        Highlight[]
+  bookmarks         Bookmark[]
+  readingNotes      ReadingNote[]
+  vocabularyEntries VocabularyEntry[]
 
   @@index([email])
   @@map("users")
@@ -68,20 +72,25 @@ model Book {
   pageCount        Int?      @map("page_count")
   totalPages       Int?      @map("total_pages")
   totalWords       Int?      @map("total_words")
-  contentVersion   Int       @default(1) @map("content_version")
-  tocVersion       Int       @default(1) @map("toc_version")
-  createdAt        DateTime  @default(now()) @map("created_at")
-  updatedAt        DateTime  @updatedAt @map("updated_at")
-  deletedAt        DateTime? @map("deleted_at")
+  contentVersion     Int       @default(1) @map("content_version")
+  tocVersion         Int       @default(1) @map("toc_version")
+  annotationsVersion Int       @default(1) @map("annotations_version")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+  deletedAt          DateTime? @map("deleted_at")
 
-  user            User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  files           BookFile[]
-  uploadSessions  UploadSession[]
-  contents        BookContent[]
-  chapters        BookChapter[]
-  importJobs      BookImportJob[]
-  tocEntries      BookTableOfContents[]
-  readingProgress ReadingProgress[]
+  user              User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  files             BookFile[]
+  uploadSessions    UploadSession[]
+  contents          BookContent[]
+  chapters          BookChapter[]
+  importJobs        BookImportJob[]
+  tocEntries        BookTableOfContents[]
+  readingProgress   ReadingProgress[]
+  highlights        Highlight[]
+  bookmarks         Bookmark[]
+  readingNotes      ReadingNote[]
+  vocabularyEntries VocabularyEntry[]
 
   @@index([userId])
   @@index([status])
@@ -256,4 +265,96 @@ model ReadingPreference {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("reading_preferences")
+}
+
+// ─── Highlights (Reflow-Safe Logical Text Anchors) ────────────────────────────
+model Highlight {
+  id           String   @id @default(uuid()) @db.Uuid
+  userId       String   @map("user_id") @db.Uuid
+  bookId       String   @map("book_id") @db.Uuid
+  tocEntryId   String?  @map("toc_entry_id") @db.Uuid
+  selectedText String   @map("selected_text") @db.Text
+  anchorData   Json     @map("anchor_data")
+  color        String   @default("yellow") // "yellow" | "green" | "blue" | "pink" | "purple"
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  book Book @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+  @@index([userId, bookId])
+  @@index([bookId])
+  @@map("highlights")
+}
+
+// ─── Bookmarks ────────────────────────────────────────────────────────────────
+model Bookmark {
+  id           String   @id @default(uuid()) @db.Uuid
+  userId       String   @map("user_id") @db.Uuid
+  bookId       String   @map("book_id") @db.Uuid
+  tocEntryId   String?  @map("toc_entry_id") @db.Uuid
+  chapterTitle String?  @map("chapter_title")
+  anchorData   Json     @map("anchor_data")
+  selectedText String?  @map("selected_text") @db.Text
+  title        String
+  description  String?  @db.Text
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  book Book @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+  @@index([userId, bookId])
+  @@index([bookId])
+  @@map("bookmarks")
+}
+
+// ─── Reading Notes ────────────────────────────────────────────────────────────
+model ReadingNote {
+  id           String   @id @default(uuid()) @db.Uuid
+  userId       String   @map("user_id") @db.Uuid
+  bookId       String   @map("book_id") @db.Uuid
+  tocEntryId   String?  @map("toc_entry_id") @db.Uuid
+  chapterTitle String?  @map("chapter_title")
+  anchorData   Json?    @map("anchor_data")
+  selectedText String?  @map("selected_text") @db.Text
+  title        String
+  content      String   @db.Text
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  book Book @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+  @@index([userId, bookId])
+  @@index([bookId])
+  @@map("reading_notes")
+}
+
+// ─── Vocabulary Collection ────────────────────────────────────────────────────
+model VocabularyEntry {
+  id                String   @id @default(uuid()) @db.Uuid
+  userId            String   @map("user_id") @db.Uuid
+  bookId            String?  @map("book_id") @db.Uuid
+  tocEntryId        String?  @map("toc_entry_id") @db.Uuid
+  chapterTitle      String?  @map("chapter_title")
+  word              String
+  normalizedWord    String   @map("normalized_word")
+  partOfSpeech      String?  @map("part_of_speech")
+  meaning           String   @db.Text
+  contextualMeaning String?  @map("contextual_meaning") @db.Text
+  exampleSentence   String?  @map("example_sentence") @db.Text
+  anchorData        Json?    @map("anchor_data")
+  pronunciation     String?
+  personalNote      String?  @map("personal_note") @db.Text
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  user User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  book Book? @relation(fields: [bookId], references: [id], onDelete: SetNull)
+
+  @@unique([userId, bookId, normalizedWord])
+  @@index([userId])
+  @@index([userId, bookId])
+  @@map("vocabulary_entries")
 }

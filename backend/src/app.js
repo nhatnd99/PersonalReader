@@ -16,6 +16,8 @@ import uploadsRouter from './modules/uploads/uploads.routes.js'
 import booksRouter from './modules/books/books.routes.js'
 import usersRouter from './modules/users/users.routes.js'
 import syncRouter from './modules/sync/sync.routes.js'
+import vocabularyRouter from './modules/vocabulary/vocabulary.routes.js'
+import { highlightsRouter, bookmarksRouter, notesRouter } from './modules/annotations/annotations.routes.js'
 
 const app = express()
 
@@ -58,6 +60,10 @@ app.use('/api/v1/books', booksRouter)
 app.use('/api/books', booksRouter)
 app.use('/api/v1/users', usersRouter)
 app.use('/api/v1/sync', syncRouter)
+app.use('/api/v1/highlights', highlightsRouter)
+app.use('/api/v1/bookmarks', bookmarksRouter)
+app.use('/api/v1/notes', notesRouter)
+app.use('/api/v1/vocabulary', vocabularyRouter)
 
 // 404 fallback
 app.use((_req, res) => {

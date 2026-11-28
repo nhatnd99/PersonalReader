@@ -11,8 +11,10 @@ export function useRealtimeSync({
   deviceId,
   localRevision,
   localTocVersion,
+  localAnnotationsVersion,
   onRemoteProgress,
   onRemoteTocChange,
+  onRemoteAnnotationsChange,
 }) {
   const [syncStatus, setSyncStatus] = useState(() => (navigator.onLine ? 'synced' : 'offline'))
   const [syncProvider, setSyncProvider] = useState('polling')
@@ -20,6 +22,7 @@ export function useRealtimeSync({
 
   const localRevisionRef = useRef(localRevision || 0)
   const localTocVersionRef = useRef(localTocVersion || 1)
+  const localAnnotationsVersionRef = useRef(localAnnotationsVersion || 1)
 
   useEffect(() => {
     localRevisionRef.current = localRevision || 0
@@ -29,6 +32,10 @@ export function useRealtimeSync({
     localTocVersionRef.current = localTocVersion || 1
   }, [localTocVersion])
 
+  useEffect(() => {
+    localAnnotationsVersionRef.current = localAnnotationsVersion || 1
+  }, [localAnnotationsVersion])
+
   const handleServerSyncState = useCallback(
     (state) => {
       if (!state) return
@@ -36,6 +43,11 @@ export function useRealtimeSync({
       if (typeof state.tocVersion === 'number' && state.tocVersion > localTocVersionRef.current) {
         localTocVersionRef.current = state.tocVersion
         if (onRemoteTocChange) onRemoteTocChange()
+      }
+
+      if (typeof state.annotationsVersion === 'number' && state.annotationsVersion > localAnnotationsVersionRef.current) {
+        localAnnotationsVersionRef.current = state.annotationsVersion
+        if (onRemoteAnnotationsChange) onRemoteAnnotationsChange()
       }
 
       const remoteProg = state.progress
@@ -49,7 +61,7 @@ export function useRealtimeSync({
         if (onRemoteProgress) onRemoteProgress(remoteProg)
       }
     },
-    [deviceId, onRemoteProgress, onRemoteTocChange]
+    [deviceId, onRemoteProgress, onRemoteTocChange, onRemoteAnnotationsChange]
   )
 
   const syncNow = useCallback(async () => {
@@ -117,6 +129,8 @@ export function useRealtimeSync({
                   handleServerSyncState({ progress: payload.progress })
                 } else if (msg.name === 'toc:updated' && payload?.tocVersion) {
                   handleServerSyncState({ tocVersion: payload.tocVersion })
+                } else if (msg.name === 'annotations:updated' && payload?.annotationsVersion) {
+                  handleServerSyncState({ annotationsVersion: payload.annotationsVersion })
                 }
               } catch (_) {}
             }

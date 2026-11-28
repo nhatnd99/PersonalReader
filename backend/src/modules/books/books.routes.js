@@ -4,6 +4,7 @@ import { rateLimit } from 'express-rate-limit'
 import { authenticate } from '../../middleware/auth.js'
 import { BooksController } from './books.controller.js'
 import { ReaderController } from '../reader/reader.controller.js'
+import { AnnotationsController } from '../annotations/annotations.controller.js'
 
 const router = Router()
 
@@ -75,5 +76,13 @@ router.delete('/:bookId/toc/:entryId', ReaderController.deleteTocEntry)
 router.get('/:bookId/progress', ReaderController.getProgress)
 router.put('/:bookId/progress', ReaderController.upsertProgress)
 router.get('/:bookId/sync-state', ReaderController.getSyncState)
+
+// Phase 4: Book-scoped Highlights, Bookmarks & Reading Notes
+router.get('/:bookId/highlights', AnnotationsController.listHighlights)
+router.post('/:bookId/highlights', AnnotationsController.createHighlight)
+router.get('/:bookId/bookmarks', AnnotationsController.listBookmarks)
+router.post('/:bookId/bookmarks', AnnotationsController.createBookmark)
+router.get('/:bookId/notes', AnnotationsController.listNotes)
+router.post('/:bookId/notes', AnnotationsController.createNote)
 
 export default router

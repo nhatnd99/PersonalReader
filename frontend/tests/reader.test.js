@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { sanitizeAndAnnotateChunkHtml } from '../src/features/reader/utils/htmlParser.js'
 import { buildTocTree } from '../src/features/reader/utils/tocGenerator.js'
 import { calculateReadingPercentage } from '../src/features/reader/utils/progressCalculator.js'
+import { resolveTextOffsetsInBlock } from '../src/features/reader/utils/textAnchor.js'
 
 describe('Phase 3 Frontend Reader Utilities', () => {
   it('sanitizes HTML and injects deterministic block & anchor IDs', () => {
@@ -39,5 +40,37 @@ describe('Phase 3 Frontend Reader Utilities', () => {
     expect(calculateReadingPercentage(contents, 1, 0.5)).toBe(25)
     expect(calculateReadingPercentage(contents, 2, 0)).toBe(50)
     expect(calculateReadingPercentage(contents, 2, 1)).toBe(100)
+  })
+
+  it('resolves logical text anchors across exact offsets, context fallback, and rejects missing text', () => {
+    const blockText = 'He was put in charge of the company financial operations.'
+    // Exact offset
+    expect(
+      resolveTextOffsetsInBlock(blockText, {
+        selectedText: 'in charge of',
+        startOffset: 11,
+        endOffset: 23,
+      })
+    ).toEqual({ start: 11, end: 23 })
+
+    // Context fallback when offsets shifted
+    expect(
+      resolveTextOffsetsInBlock(blockText, {
+        selectedText: 'in charge of',
+        startOffset: 0,
+        endOffset: 5,
+        prefixContext: 'put ',
+        suffixContext: ' the',
+      })
+    ).toEqual({ start: 11, end: 23 })
+
+    // Missing text safely returns null
+    expect(
+      resolveTextOffsetsInBlock(blockText, {
+        selectedText: 'nonexistent phrase',
+        startOffset: 0,
+        endOffset: 5,
+      })
+    ).toBeNull()
   })
 })

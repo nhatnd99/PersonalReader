@@ -226,7 +226,7 @@ export class BookImportService {
               completedAt: new Date(),
             },
           })
-        })
+        }, { maxWait: 10000, timeout: 30000 })
 
         const [completedBook, completedJob] = await Promise.all([
           prisma.book.findUnique({ where: { id: bookId } }),

@@ -7,6 +7,8 @@ export default function ReaderHeader({
   readingPercentage,
   tocOpen,
   onToggleToc,
+  toolsOpen,
+  onToggleTools,
   settingsOpen,
   onToggleSettings,
   syncStatus,
@@ -40,6 +42,17 @@ export default function ReaderHeader({
         >
           <span>📑</span>
           <span>TOC</span>
+        </button>
+
+        <button
+          type="button"
+          className={`rf-reader-btn ${toolsOpen ? 'active' : ''}`}
+          onClick={onToggleTools}
+          aria-expanded={toolsOpen}
+          title="Bookmarks, Highlights & Notes"
+        >
+          <span>🔖</span>
+          <span>Tools</span>
         </button>
 
         <button
