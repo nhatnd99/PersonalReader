@@ -1,6 +1,7 @@
 /**
  * Hybrid Table of Contents Service (Deterministic Auto Generation + Manual Customization).
  */
+import crypto from 'node:crypto'
 import prisma from '../../config/database.js'
 import { RealtimeSyncService } from '../../services/sync/realtimeSync.service.js'
 
@@ -51,10 +52,10 @@ export function extractHeadingsFromContents(contents) {
 }
 
 /**
- * Builds flat DB rows with resolved parentId hierarchy based on heading levels.
+ * Builds flat DB rows in memory with pre-generated UUIDs and resolved parentId hierarchy.
  */
-async function persistAutoTocEntries(tx, bookId, extractedHeadings) {
-  const created = []
+function buildAutoTocRows(bookId, extractedHeadings) {
+  const rows = []
   const levelStack = [] // [{ level, id }]
 
   for (const item of extractedHeadings) {
@@ -62,26 +63,25 @@ async function persistAutoTocEntries(tx, bookId, extractedHeadings) {
       levelStack.pop()
     }
     const parentId = levelStack.length > 0 ? levelStack[levelStack.length - 1].id : null
+    const id = crypto.randomUUID()
 
-    const row = await tx.bookTableOfContents.create({
-      data: {
-        bookId,
-        parentId,
-        title: item.title,
-        anchorId: item.anchorId,
-        contentBlockId: item.contentBlockId,
-        contentSequence: item.contentSequence,
-        level: item.level,
-        position: item.position,
-        sourceType: 'AUTO',
-      },
+    rows.push({
+      id,
+      bookId,
+      parentId,
+      title: item.title,
+      anchorId: item.anchorId,
+      contentBlockId: item.contentBlockId,
+      contentSequence: item.contentSequence,
+      level: item.level,
+      position: item.position,
+      sourceType: 'AUTO',
     })
 
-    levelStack.push({ level: item.level, id: row.id })
-    created.push(row)
+    levelStack.push({ level: item.level, id })
   }
 
-  return created
+  return rows
 }
 
 export class TocService {
@@ -117,16 +117,14 @@ export class TocService {
 
       const extracted = extractHeadingsFromContents(contents)
       if (extracted.length > 0) {
-        entries = await prisma.$transaction(async (tx) => {
-          // Re-check inside transaction to avoid duplicate generation on concurrent opens
-          const existingCount = await tx.bookTableOfContents.count({ where: { bookId } })
-          if (existingCount > 0) {
-            return tx.bookTableOfContents.findMany({
-              where: { bookId },
-              orderBy: [{ position: 'asc' }, { createdAt: 'asc' }],
-            })
-          }
-          return persistAutoTocEntries(tx, bookId, extracted)
+        const rows = buildAutoTocRows(bookId, extracted)
+        await prisma.bookTableOfContents.createMany({
+          data: rows,
+          skipDuplicates: true,
+        })
+        entries = await prisma.bookTableOfContents.findMany({
+          where: { bookId },
+          orderBy: [{ position: 'asc' }, { createdAt: 'asc' }],
         })
       }
     }
@@ -270,10 +268,10 @@ export class TocService {
   static async reorderEntries({ bookId, userId, items }) {
     await this._assertBookOwner(bookId, userId)
 
-    const updatedBook = await prisma.$transaction(async (tx) => {
-      for (const item of items) {
-        if (item.parentId === item.id) continue
-        await tx.bookTableOfContents.updateMany({
+    const ops = items
+      .filter((item) => item.parentId !== item.id)
+      .map((item) =>
+        prisma.bookTableOfContents.updateMany({
           where: { id: item.id, bookId },
           data: {
             position: item.position,
@@ -282,13 +280,16 @@ export class TocService {
             sourceType: 'MANUAL',
           },
         })
-      }
+      )
 
-      return tx.book.update({
+    const results = await prisma.$transaction([
+      ...ops,
+      prisma.book.update({
         where: { id: bookId },
         data: { tocVersion: { increment: 1 } },
-      })
-    })
+      }),
+    ])
+    const updatedBook = results[results.length - 1]
 
     const entries = await prisma.bookTableOfContents.findMany({
       where: { bookId },
@@ -315,15 +316,20 @@ export class TocService {
     })
 
     const extracted = extractHeadingsFromContents(contents)
+    const rows = extracted.length > 0 ? buildAutoTocRows(bookId, extracted) : []
 
-    const { entries, updatedBook } = await prisma.$transaction(async (tx) => {
-      await tx.bookTableOfContents.deleteMany({ where: { bookId } })
-      const created = extracted.length > 0 ? await persistAutoTocEntries(tx, bookId, extracted) : []
-      const book = await tx.book.update({
+    const results = await prisma.$transaction([
+      prisma.bookTableOfContents.deleteMany({ where: { bookId } }),
+      ...(rows.length > 0 ? [prisma.bookTableOfContents.createMany({ data: rows })] : []),
+      prisma.book.update({
         where: { id: bookId },
         data: { tocVersion: { increment: 1 } },
-      })
-      return { entries: created, updatedBook: book }
+      }),
+    ])
+    const updatedBook = results[results.length - 1]
+    const entries = await prisma.bookTableOfContents.findMany({
+      where: { bookId },
+      orderBy: [{ position: 'asc' }, { createdAt: 'asc' }],
     })
 
     await RealtimeSyncService.publishBookSyncEvent({
